@@ -1,0 +1,21 @@
+{
+  "cSpell.words": [
+    "ifstream"
+  ],
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  "editor.formatOnSave": true,
+  "eslint.validate": [
+    "javascript",
+    "javascriptreact",
+    "typescript",
+    "typescriptreact"
+  ],
+  "eslint.format.enable": true,
+  "javascript.validate.enable": true,
+  "eslint.enable": true,
+  "eslint.run": "onType",
+  "eslint.debug": true,
+  "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+}

@@ -1,0 +1,57 @@
+{
+  "expo": {
+    "name": "Cloud Services",
+    "slug": "cloud-storage",
+    "icon": "./assets/Cloud-service.png",
+    "scheme": "com.cloudapp",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "plugins": [
+      "@notifee/react-native"
+    ],
+    "android": {
+      "package": "com.khayym.cloudstorage",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#FFFFFF"
+      },
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "data": {
+            "scheme": "com.cloudapp",
+            "host": "oauth2redirect"
+          },
+          "category": [
+            "DEFAULT",
+            "BROWSABLE"
+          ]
+        }
+      ]
+    },
+    "ios": {
+      "bundleIdentifier": "com.khayym.cloudstorage",
+      "supportsTablet": false,
+      "infoPlist": {
+        "UIBackgroundModes": [
+          "fetch"
+        ]
+      }
+    },
+    "extra": {
+      "experienceUrl": "https://expo.dev/@your-username/your-app",
+      "eas": {
+        "projectId": "3cfaed27-4cee-4548-8440-cc2e446fb352"
+      }
+    }
+  }
+}

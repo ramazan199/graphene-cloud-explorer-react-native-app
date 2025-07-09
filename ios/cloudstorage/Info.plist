@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>APIKey</key>
+	<string>eyJhbGciOiJSU0EtU0hBMjU2IiwidmVyIjoiMSJ9.eyJ2ZXIiOiIzIiwiZW5kcG9pbnRzIjp7ImF1dGh6IjoiaHR0cHM6Ly93d3cuYW1hem9uLmNvbS9hcC9vYSIsInRva2VuRXhjaGFuZ2UiOiJodHRwczovL2FwaS5hbWF6b24uY29tL2F1dGgvbzIvdG9rZW4ifSwiY2xpZW50SWQiOiJhbXpuMS5hcHBsaWNhdGlvbi1vYTItY2xpZW50LmJmNTkwNDFjMTI1NjQ0Nzc4MzZjODEyMDIzZWZmOGE0IiwiYXBwRmFtaWx5SWQiOiJhbXpuMS5hcHBsaWNhdGlvbi44ZGM2MmRkYTg3ODc0ZGIzOTMzNWI2NjhjMGZmM2Q2NCIsImJ1bmRsZVNlZWRJZCI6ImNvbS5raGF5eW0uY2xvdWRzdG9yYWdlIiwiYnVuZGxlSWQiOiJjb20ua2hheXltLmNsb3Vkc3RvcmFnZSIsImlzcyI6IkFtYXpvbiIsInR5cGUiOiJBUElLZXkiLCJhcHBWYXJpYW50SWQiOiJhbXpuMS5hcHBsaWNhdGlvbi1jbGllbnQuNjUyNmI3NjlkNjIxNDcxNTk1ZTkzNzNiMjJlYzRmMzUiLCJ0cnVzdFBvb2wiOm51bGwsImFwcElkIjoiYW16bjEuYXBwbGljYXRpb24tY2xpZW50LjY1MjZiNzY5ZDYyMTQ3MTU5NWU5MzczYjIyZWM0ZjM1IiwiaWQiOiJhMjczMzZhZC03MGE3LTQ2MDctOTczZS1kOTBiZTcyZDAxM2YiLCJpYXQiOiIxNjY4MTY3NDg4NjIzIn0=.K851FpcNOBvumk3Bp9y0kO3j5CKiysbeYQI6etOvB3bcinPMlArAWqrkLHI/LehELMMEoIN8X3pFBQU7ONn6D4QJKNF7JVinkIHViRFAwi7ivFZqWtOLxxgWkJXhZAsqa5G4L+2ApC8lf8HJnCipOxPKA5fYZWzYfbN1I1KusZSA1qWbJLFBnjdf9rnXozgspD3IEP6Y1X9yz4KMm8lWAsUJxcv8GyMFeL2JTnxF4ikSm4U+WiH4FEnM16noa6ewZUbJXDbUOiIYm3IkHgSjfYwLlG1ToL3RQv9nSlbOPap2ppR0qQSBN+G4zfB2Ys4KGG+TJdxw0W95m9UjX3+V4w==</string>
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	</array>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<key>CFBundleDisplayName</key>
+	<string>Uup Cloud</string>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>$(PRODUCT_NAME)</string>
+	<key>CFBundlePackageType</key>
+	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
+	<key>CFBundleShortVersionString</key>
+	<string>1.0.7</string>
+	<key>CFBundleSignature</key>
+	<string>????</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.khayym.cloudstorage</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>amzn-com.khayym.cloudstorage</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>uupcloud</string>
+			</array>
+		</dict>
+	</array>
+	<key>CFBundleVersion</key>
+	<string>1</string>
+	<key>LSRequiresIPhoneOS</key>
+	<true/>
+	<key>LSSupportsOpeningDocumentsInPlace</key>
+	<string>YES</string>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+		<key>NSExceptionDomains</key>
+		<dict>
+			<key>localhost</key>
+			<dict>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<true/>
+			</dict>
+		</dict>
+	</dict>
+	<key>NSAppleMusicUsageDescription</key>
+	<string>This app wants to access music, video and media to download, upload and open media files inside the app</string>
+	<key>NSCameraUsageDescription</key>
+	<string>This app uses the Camera to scan QR code</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>YOUR TEXT</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Allow $(PRODUCT_NAME) to access your microphone</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>This app wants to access photos to download, upload and open photos inside the app</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>This app wants to access photos to download, upload and open photos inside the app</string>
+	<key>NSRemindersUsageDescription</key>
+	<string>This app wants to access photos to download, upload and open photos inside the app</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+	</array>
+	<key>UIFileSharingEnabled</key>
+	<true/>
+	<key>UILaunchStoryboardName</key>
+	<string>SplashScreen</string>
+	<key>UIRequiredDeviceCapabilities</key>
+	<array>
+		<string>armv7</string>
+	</array>
+	<key>UIRequiresFullScreen</key>
+	<false/>
+	<key>UIStatusBarStyle</key>
+	<string>UIStatusBarStyleDefault</string>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationPortraitUpsideDown</string>
+	</array>
+	<key>UISupportedInterfaceOrientations~ipad</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationPortraitUpsideDown</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+	<key>UIUserInterfaceStyle</key>
+	<string>Light</string>
+	<key>UIViewControllerBasedStatusBarAppearance</key>
+	<false/>
+</dict>
+</plist>
