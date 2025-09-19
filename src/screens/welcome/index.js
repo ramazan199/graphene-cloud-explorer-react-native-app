@@ -6,58 +6,86 @@ import { useContextApi } from '../../context/ContextApi';
 import { cleanUserSecretsData, setUserSecretDataToRedux } from '../../reducers/userSecretDataReducer';
 import { getFavoritesNames } from '../../utils/data-transmission-utils';
 import { dropMMKV, getUserSecretDataMMKV, removeUserEncryptionTypeMMKV } from '../../utils/mmkv';
-import { getAuthStatus, saveAuthStatusFalse } from '../../utils/secure-storage';
-import SignInUp from '../../components/SignInUp';
-
-// Fix the import paths for lazy-loaded components
 const SignInScreenNavigator = lazy(() => import('../../navigation/SignInScreenNavigator'));
 const TabNavigator = lazy(() => import('../../navigation/TabNavigator'));
+import { checkAvailableDeviceUpdate } from '../../utils/device-updates';
+import { DeviceEventEmitter } from 'react-native';
+import { navigateToFolder, parseFile } from '../../utils/essential-functions';
+import { setData } from '../../reducers/testReducer';
+import { setFavoritesContent } from '../../reducers/fileReducer';
+import { setProxy } from '../../reducers/proxyReducer';
+
 
 const WelcomeScreen = () => {
-    const [isAuth, setIsAuth] = useState(null);
-    const dispatch = useDispatch();
+    const dispatch = useDispatch()
+    const [userAuth, setUserAuth] = useState(true);
+    const { wsScreen } = useContextApi();
+    const [guideVisible, setGuideVisible] = useState(false);
+    const setContent = (content) => dispatch(setData(content))
+
+    DeviceEventEmitter.addListener('logOut', async () => {
+        dispatch(cleanUserSecretsData());
+        await dropMMKV()
+        return setUserAuth(false);
+    })
+
+    DeviceEventEmitter.addListener('logIn', () => {
+        setUserAuth(true);
+    })
+
+
+    const authCheck = async () => {
+        const { auth, clientId, guide, privetKey, publicKey, publicKeyB64, serverId, encryptionType, qr, deviceKey, proxy } = await getUserSecretDataMMKV();
+        if (!guide) return setGuideVisible(true)
+        else if (auth === true) {
+            setUserAuth(true)
+            dispatch(setUserSecretDataToRedux({ clientId, privetKey, publicKey, publicKeyB64, serverId, encryptionType, auth, guide, qr, deviceKey }));
+            dispatch(setProxy(proxy));
+            getFavoritesNames().then(favs => {
+                const parsed = parseFile(favs);
+                dispatch(setFavoritesContent(parsed));
+            })
+            navigateToFolder("", "CloudScreen").then((content) => setContent(content));
+            return setTimeout(() => {
+                checkAvailableDeviceUpdate(qr);
+            }, 1500);
+
+        }
+
+        else {
+            setUserAuth(false)
+            setGuideVisible(false)
+            dispatch(cleanUserSecretsData());
+            return await removeUserEncryptionTypeMMKV()
+        }
+    }
 
     useLayoutEffect(() => {
-        checkAuth();
-    }, []);
+        authCheck();
+        return
+    }, [userAuth, wsScreen])
 
-    const checkAuth = async () => {
-        // await saveAuthStatusFalse();
-        const auth = await getAuthStatus();
-        setIsAuth(auth === 'true');
-    };
+
+
 
     return (
+
         <Suspense
-            fallback={
-                <ActivityIndicator
-                    size="large"
-                    color="#415EB6"
-                    style={{
-                        position: "absolute",
-                        backgroundColor: "#fff",
-                        height: "100%",
-                        width: "100%",
-                    }}
-                />
+            fallback={<ActivityIndicator
+                size="large"
+                color="#415EB6"
+                style={{
+                    position: "absolute",
+                    backgroundColor: "#fff",
+                    height: "100%",
+                    width: "100%",
+                }}
+            />
             }
         >
-            {isAuth === null ? (
-                <ActivityIndicator
-                    size="large"
-                    color="#415EB6"
-                    style={{
-                        position: "absolute",
-                        backgroundColor: "#fff",
-                        height: "100%",
-                        width: "100%",
-                    }}
-                />
-            ) : (
-                isAuth ? <TabNavigator /> : <SignInUp />
-            )}
+            {(guideVisible ? <OnBoarding /> : (userAuth ? <TabNavigator /> : <SignInScreenNavigator />))}
         </Suspense>
-    );
-};
+    )
+}
 
-export default WelcomeScreen;
+export default WelcomeScreen

@@ -41,14 +41,14 @@ const ProfileScreen = ({ route, navigation }) => {
 
     return (
         <Layout name={route.name}>
-            <View style={styles.buttonContainer}>
+            {/* <View style={styles.buttonContainer}>
                 <TouchableOpacity 
                     style={styles.button}
                     onPress={() => navigation.navigate('PaymentScreen')}
                 >
                     <Text style={styles.buttonText}>Upgrade Storage Space</Text>
                 </TouchableOpacity>
-            </View>
+            </View> */}
             <DetailsScreen />
         </Layout>
     );

@@ -20,7 +20,7 @@ import {
 import { store } from '../store';
 import { decryptXorAB, hash256 } from './encryption-utils';
 import { command, chunkSize, thumbnailSize } from '../constants';
-// import axios from 'axios';
+import axios from 'axios';
 import { setFavoritesList } from '../reducers/fileReducer';
 import { openModal } from '../reducers/modalReducer';
 import { setOccupiedSpace } from '../reducers/filesInfoReducer';
@@ -48,7 +48,6 @@ import {
 import { enqueue, forceEnqueue } from '../reducers/refreshQueueReducer';
 import { useErrorAlert } from '../hooks/useErrorAlert';
 import { parseSingle } from './parser';
-import { cloudApiClient } from './apiClient';
 
 var download = [];
 var upload = [];
@@ -60,7 +59,15 @@ function bytesToSize(bytes) {
   return Math.round(bytes / Math.pow(1024, i), 2) + ' ' + sizes[i];
 }
 
-
+export async function setClient(rsaPubKey) {
+  // deviceKey = null; // the server will send a new encryption ke
+  let clientPublicKey = base64ToBuffer(store.getState().userSecret.publicKeyB64);
+  let clientSetting = joinBuffers(int32ToBuffer(chunkSize), int16ToBuffer(thumbnailSize));
+  clientSetting = joinBuffers(clientSetting, clientPublicKey);
+  return encryptRsaOaep(rsaPubKey, clientSetting).then((clientSettingEncrypted) => {
+    return executeRequest(command.SetClient, clientSettingEncrypted);
+  });
+}
 
 export function getCommandName(commandId) {
   return enumToString(command, commandId);
@@ -75,10 +82,10 @@ DeviceEventEmitter.addListener('spoolerCleaner', () => {
   concurrentRequest = 0;
 });
 
-export async function executeRequest(commandType, data, clientId) {
-  if (commandType === 8) MinHeap.push(spooler, [10, [commandType, data]]);
-  else if (commandType === 19) MinHeap.push(spooler, [8, [commandType, data]]);
-  else MinHeap.push(spooler, [5, [commandType, data]]);
+export function executeRequest(commandId, data) {
+  if (commandId === 8) MinHeap.push(spooler, [10, [commandId, data]]);
+  else if (commandId === 19) MinHeap.push(spooler, [8, [commandId, data]]);
+  else MinHeap.push(spooler, [5, [commandId, data]]);
   return spoolingRequest();
 }
 
@@ -117,8 +124,20 @@ async function spoolingRequest() {
         store.getState().proxyManager.proxy +
         '/data?cid=' +
         encodeURIComponent(store.getState().userSecret.clientId);
+      let purpose;
 
-      if (get) {
+      if (commandId == command.SetClient || commandId == command.GetEncryptedQR) {
+        url += '&sid=' + encodeURIComponent(store.getState().userSecret.serverId);
+        purpose = getCommandName(commandId);
+        url += '&purpose=' + getCommandName(commandId); // SetClient Parameter is used only in debug that indicates whether a public encryption key is sent to the device. In releise the key is never sent it must be scanned by QR code
+      }
+
+      if (purpose === getCommandName(command.GetEncryptedQR)) {
+        // request.send(data);
+        axios.post(url, data).then((response) => {
+          onCommandResponse.GetEncryptedQR(response.data);
+        });
+      } else if (commandId == command.SetClient) {
         const controller = new AbortController();
         const signal = controller.signal;
         let reqTimeout = setTimeout(() => controller.abort(), 6000);
@@ -129,17 +148,44 @@ async function spoolingRequest() {
             type: 'info',
             icon: 'ex',
           }))
-        }, 3000)
+        }, 6000)
         try {
-          const response = await cloudApiClient.post('/', {
-            command: commandId,
-            data: data,
-            clientId: store.getState().userSecret.clientId
-          });
+          const response = await axios.post(url, data, { timeout: 6000, signal });
           clearTimeout(reqTimeout);
           clearTimeout(lowInternet);
-          //fix ram
-          return response.data;
+          return handleResponse(response);
+        } catch (error) {
+          clearTimeout(reqTimeout);
+          clearTimeout(lowInternet);
+          spooler = [];
+          concurrentRequest = 0;
+          store.dispatch(
+            openModal({
+              head: 'Pay attention',
+              content:
+                'There was a problem connect to Uup-Cloud. Please try again and make sure the Cloud Box or mobile phone is connected to the Internet.',
+              type: 'info',
+              icon: 'ex',
+            })
+          );
+        }
+      } else if (get) {
+        const controller = new AbortController();
+        const signal = controller.signal;
+        let reqTimeout = setTimeout(() => controller.abort(), 6000);
+        let lowInternet = setTimeout(() => {
+          store.dispatch(openModal({
+            head: 'Pay attention',
+            content: 'Your internet connection is slow',
+            type: 'info',
+            icon: 'ex',
+          }))
+        }, 6000)
+        try {
+          const response = await axios.get(url, { timeout: 6000, signal });
+          clearTimeout(reqTimeout);
+          clearTimeout(lowInternet);
+          return handleResponse(response);
         } catch (error) {
           return error;
         }
@@ -151,44 +197,45 @@ async function spoolingRequest() {
 
           data = joinBuffers(cmd, data);
         }
-        return async () => {
-          const controller = new AbortController();
-          const signal = controller.signal;
-          let reqTimeout = setTimeout(() => controller.abort(), 6000);
-          let lowInternet = setTimeout(() => {
-            store.dispatch(openModal({
-              head: 'Pay attention',
-              content: 'Your internet connection is slow',
-              type: 'info',
-              icon: 'ex',
-            }))
-          }, 3000)
-          try {
-            const response = await cloudApiClient.post('/', {
-              command: commandId,
-              data: data,
-              clientId: store.getState().userSecret.clientId
-            });
-            clearTimeout(reqTimeout);
-            clearTimeout(lowInternet);
-            return response.data;
-          } catch (error) {
-            clearTimeout(reqTimeout);
-            clearTimeout(lowInternet);
-            store.dispatch(
-              openModal({
-                head: 'Failed to connect',
-                content:
-                  'Please try again and make sure the Cloud Box or device is connected to the Internet and Cloud Box working correctly.',
-                type: 'confirm',
-                callback: () => {
-                  DeviceEventEmitter.emit('spoolerCleaner');
-                  store.dispatch(enqueue(['CloudScreen', 'MediaScreen', 'FavoriteScreen']));
-                },
-              })
-            );
-          }
-        };
+        return encryptDataForTheDevice(data, commandId)
+          .then(async (encrypted) => {
+            const controller = new AbortController();
+            const signal = controller.signal;
+            let reqTimeout = setTimeout(() => controller.abort(), 6000);
+            let lowInternet = setTimeout(() => {
+              store.dispatch(openModal({
+                head: 'Pay attention',
+                content: 'Your internet connection is slow',
+                type: 'info',
+                icon: 'ex',
+              }))
+            }, 6000)
+            try {
+              const response = await axios.post(url, encrypted, { timeout: 6000, signal });
+              let decrypted = handleResponse(response);
+              clearTimeout(reqTimeout);
+              clearTimeout(lowInternet);
+              return decrypted;
+            } catch (error) {
+              clearTimeout(reqTimeout);
+              clearTimeout(lowInternet);
+              store.dispatch(
+                openModal({
+                  head: 'Failed to connect',
+                  content:
+                    'Please try again and make sure the Cloud Box or device is connected to the Internet and Cloud Box working correctly.',
+                  type: 'confirm',
+                  callback: () => {
+                    DeviceEventEmitter.emit('spoolerCleaner');
+                    store.dispatch(enqueue(['CloudScreen', 'MediaScreen', 'FavoriteScreen']));
+                  },
+                })
+              );
+            }
+          })
+          .catch((error) => {
+            useErrorAlert('Encryption error:', error);
+          });
       }
     } catch {
       concurrentRequest++;
@@ -196,6 +243,42 @@ async function spoolingRequest() {
   }
 }
 
+async function handleResponse(response) {
+  // console.log('Handling response');  log for
+  requestDone();
+  if (
+    response.readyState == response.DONE &&
+    response.status == 200 &&
+    response.responseText != ''
+  ) {
+    const { encryptionType } = await getUserSecretDataMMKV();
+    if (encryptionType === 'xorAB') {
+      // Use the generated key sent by the server
+      return decryptResponse(response.data).then((decrypted) => {
+        return onResponse(decrypted);
+      });
+    } else {
+      // Use encryption with keys generated on the client
+      return asymmetricalDecrypt(response.data).then((decrypted) => {
+        return onResponse(decrypted);
+      });
+    }
+  }
+}
+
+export function onResponse(binary) {
+  let commandId = bufferToInt(binary.slice(0, 4));
+  let command = getCommandName(commandId);
+  let data = binary.slice(4);
+  let params = splitData(data);
+  return onCommandResponse[command](params);
+}
+
+export function decryptResponse(encryptedResponseB64) {
+  let encryptedData = base64ToBuffer(encryptedResponseB64);
+  let data = decryptDataFromTheDevice(encryptedData);
+  return data;
+}
 
 export async function authentication(auth, clientId) {
   let pin = store.getState().userSecret.devicePin;
@@ -279,6 +362,56 @@ export function downloadArrayBuffer(fileName, bytes, isShare) {
 }
 
 export const onCommandResponse = {
+  SetClient: function (params) {
+    console.log('The device received the public key in debug mode!');
+  },
+  Authentication: async function (params) {
+    await userAuthMMKV();
+    DeviceEventEmitter.emit('logIn');
+    store.dispatch(forceEnqueue("CloudScreen"))
+    store.dispatch(setAuthWait(false));
+    store.dispatch(
+      openModal({
+        content: 'You successfully authenticated your account',
+        head: 'Successful',
+        type: 'info',
+        icon: 'qr',
+      })
+    );
+    // return getDir("");
+    // getDir("");
+  },
+  // Successful pairing with the device: When the device has scanned the QR code with the public key we receive the encryption key that we must use to send and receive commands to the server!
+  Pair: async function (params) {
+    let clientIdHex = bufferToHex(params[0]);
+    let deviceIV = params[2];
+    let auth = params[3];
+    if (clientIdHex != store.getState().userSecret.clientId) {
+      // console.log('Wrong connection, key verification failed!');  log for
+    } else if (store.getState().userSecret.deviceKey != undefined) {
+      // console.log('Attempt to change the encryption key!');  log for
+    } else {
+      let deviceKey;
+      if (params[1].byteLength > 0) {
+        await setUserEncryptionTypeMMKV('aes');
+        store.dispatch(setUserSecretDataToRedux({ encryptionType: 'aes' }));
+        deviceKey = params[1];
+        importSecretKey(deviceKey).then(async (key) => {
+          deviceKey.key = key;
+          deviceKey.IV = deviceIV;
+          let fin = { key: key, IV: deviceIV };
+
+          await setUserDeviceKeyMMKV(fin);
+          store.dispatch(setUserSecretDataToRedux({ deviceKey: fin }));
+        });
+      } else {
+        await setUserEncryptionTypeMMKV('xorAB');
+        store.dispatch(setUserSecretDataToRedux({ encryptionType: 'xorAB' }));
+      }
+    }
+    // Authentication
+    return authentication(auth, store.getState().userSecret.clientId);
+  },
 
   // Error: async function (params) {
   //   let error = bufferToString(params[0]);
@@ -301,7 +434,6 @@ export const onCommandResponse = {
   //     );
   //   }
   // },
-
   GetDir: function (params) {
     // let currentPath = bufferToString(params[0]);
     let jsonObject = JSON.parse(bufferToString(params[1]));
@@ -364,7 +496,6 @@ export const onCommandResponse = {
       return getFile(fullName, chunkPart + 1);
     }
   },
-
   Share: function (params) {
     return this.GetFile(params, true);
   },
@@ -423,6 +554,26 @@ export const onCommandResponse = {
       })
     );
     return spaceOccupied;
+  },
+  GetEncryptedQR: function (encryptedDataB64) {
+    let encryptedData = base64ToBuffer(encryptedDataB64);
+    decryptXorAB(store.getState().userSecret.qr, encryptedData).then((data) => {
+      store.dispatch(setUserSecretDataToRedux({ qr: null }));
+      let offset = 0;
+      let type = new Uint8Array(data.slice(offset, 1))[0];
+      if (type == 2) {
+        offset += 1;
+        let mSize = 2048 / 8; //NOTE: modules with sizes different of 2048 give an error during encryption in JavaScript
+        let modulus = data.slice(offset, offset + mSize);
+        offset += mSize;
+        let exponent = data.slice(offset, offset + 3);
+        importRsaPublicKey(modulus, exponent).then((rsaPubKey) => {
+          setClient(rsaPubKey);
+        });
+      } else {
+        // console.log("QR code format not supported!")  log for s
+      }
+    });
   },
 };
 
@@ -529,7 +680,10 @@ export const setFileStream = async (b64, file, index, path) => {
 //   return executeRequest(command.SetFile, JSON.stringify(File));
 // }
 
-
+export function asymmetricalDecrypt(encryptedResponseB64) {
+  let encryptedData = base64ToBuffer(encryptedResponseB64);
+  return decryptRsaOaep(encryptedData, store.getState().userSecret.privateKey);
+}
 
 export function getFile(fullFileName, chunkNumber) {
   // chunkNumber is base 1 (the first chunk is number 1)

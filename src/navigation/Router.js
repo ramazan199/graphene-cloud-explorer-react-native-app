@@ -14,7 +14,7 @@ import { useContextApi } from '../context/ContextApi';
 import { getCellularInfoMMKV } from '../utils/mmkv';
 import { setIntentFile } from '../reducers/filesTransferNewReducer';
 export const navigationRef = createNavigationContainerRef()
-
+import { SettingsScreen } from '../screens/settings/index.android'; 
 const Router = () => {
 
     const dispatch = useDispatch();
@@ -91,6 +91,11 @@ const Router = () => {
                     <Stack.Screen
                         name="TabNavigator"
                         component={TabNavigator}
+                        options={{ headerShown: false }}
+                    />
+                     <Stack.Screen
+                        name="SettingsScreen"
+                        component={SettingsScreen}
                         options={{ headerShown: false }}
                     />
 

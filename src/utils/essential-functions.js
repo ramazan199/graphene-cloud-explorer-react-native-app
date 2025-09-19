@@ -90,7 +90,6 @@ export async function onQrCodeAcquires(qrCode) {
         let serverPublicKey = qr.slice(offset, offset + 33);
         offset += 33;
         let entryPoint = bufferToString(qr.slice(offset)); //proxy ;
-
         await entryPointToProxy(entryPoint);
         return hash256(serverPublicKey).then(async (hash) => {
             let serverId = bufferToHex(hash.slice(0, 8));
@@ -116,18 +115,20 @@ export async function onQrCodeAcquires(qrCode) {
 }
 
 async function entryPointToProxy(ep) {
-    if (ep == null || ep == '') {
-        ep = 'server.cloudservices.agency';
-    } else if (ep.indexOf('.') == -1) {
-        ep = ep + '.cloudservices.agency';
-    }
-    let json = await resolveDNS(ep);
-    if (json.Answer && json.Answer.length > 0) {
-        ep = json.Answer[0].data;
-    }
-    if (!ep.startsWith('http')) {
-        ep = 'http://' + ep;
-    }
+    // if (ep == null || ep == '') {
+    //     ep = 'server.cloudservices.agency';
+    // } else if (ep.indexOf('.') == -1) {
+    //     ep = ep + '.cloudservices.agency';
+    // }
+    // let json = await resolveDNS(ep);
+    // if (json.Answer && json.Answer.length > 0) {
+    //     ep = json.Answer[0].data;
+    // }
+    // if (!ep.startsWith('http')) {
+    //     ep = 'http://' + ep;
+    // }
+    // ep = "http://195.20.235.5:5050";
+    ep  = "http://proxy.tc0.it:5050";
     store.dispatch(setProxy(ep));
     await setProxyMMKV(ep);
     let proxy = store.getState().proxyManager.proxy;

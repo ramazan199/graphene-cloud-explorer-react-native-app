@@ -1,40 +1,14 @@
-import React from 'react';
-import { TouchableOpacity, Text, ActivityIndicator, StyleSheet } from 'react-native';
+import { Text, TouchableOpacity } from 'react-native'
+import { ActivityIndicator } from 'react-native-paper'
+import { styles } from './styles'
 
-export const Button = ({ text, callback, disabled, loading }) => {
+export const Button = ({ text, callback, variant = 'primary', disabled = false, wait }) => {
     return (
-        <TouchableOpacity 
-            style={[
-                styles.button,
-                disabled && styles.buttonDisabled
-            ]}
-            onPress={callback}
-            disabled={disabled || loading}
-        >
-            {loading ? (
-                <ActivityIndicator color="#FFFFFF" />
-            ) : (
-                <Text style={styles.buttonText}>{text}</Text>
-            )}
+        <TouchableOpacity style={!disabled ? (variant == 'primary' ? styles.primary : styles.outlined) : styles.disabled} onPress={callback} disabled={disabled || wait}>
+            {
+                wait ? <ActivityIndicator size="small" color="#fff" /> : <Text style={variant == 'primary' ? styles.primaryText : styles.outlinedText}>{text}</Text>
+            }
         </TouchableOpacity>
-    );
-};
-
-const styles = StyleSheet.create({
-    button: {
-        backgroundColor: '#007AFF',
-        height: '100%',
-        borderRadius: 8,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    buttonDisabled: {
-        backgroundColor: '#A5A5A5',
-    },
-    buttonText: {
-        color: '#FFFFFF',
-        fontSize: 16,
-        fontWeight: '600',
-    },
-});
+    )
+}
 
