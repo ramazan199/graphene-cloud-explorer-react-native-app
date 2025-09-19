@@ -3,9 +3,6 @@
 
 Clone the project
 
-```bash
-  git clone https://github.com/khayym/cloud-storage
-```
 
 Go to the project directory
 
