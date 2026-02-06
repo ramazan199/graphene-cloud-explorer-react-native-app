@@ -21,6 +21,7 @@ const WelcomeScreen = () => {
     const [userAuth, setUserAuth] = useState(true);
     const { wsScreen } = useContextApi();
     const [guideVisible, setGuideVisible] = useState(false);
+    const showGuide = false;
     const setContent = (content) => dispatch(setData(content))
 
     DeviceEventEmitter.addListener('logOut', async () => {
@@ -83,7 +84,7 @@ const WelcomeScreen = () => {
             />
             }
         >
-            {(guideVisible ? <OnBoarding /> : (userAuth ? <TabNavigator /> : <SignInScreenNavigator />))}
+            {(showGuide && guideVisible ? <OnBoarding /> : (userAuth ? <TabNavigator /> : <SignInScreenNavigator />))}
         </Suspense>
     )
 }
