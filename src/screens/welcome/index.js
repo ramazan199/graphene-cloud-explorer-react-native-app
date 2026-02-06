@@ -18,7 +18,7 @@ import { setProxy } from '../../reducers/proxyReducer';
 
 const WelcomeScreen = () => {
     const dispatch = useDispatch()
-    const [userAuth, setUserAuth] = useState(true);
+    const [userAuth, setUserAuth] = useState(false);
     const { wsScreen } = useContextApi();
     const [guideVisible, setGuideVisible] = useState(false);
     const showGuide = false;
@@ -37,8 +37,17 @@ const WelcomeScreen = () => {
 
     const authCheck = async () => {
         const { auth, clientId, guide, privetKey, publicKey, publicKeyB64, serverId, encryptionType, qr, deviceKey, proxy } = await getUserSecretDataMMKV();
-        if (!guide) return setGuideVisible(true)
-        else if (auth === true) {
+        if (!guide) {
+            if (showGuide) {
+                setGuideVisible(true);
+                return;
+            }
+            // Guide disabled: fall back to sign-in flow
+            setUserAuth(false);
+            setGuideVisible(false);
+            dispatch(cleanUserSecretsData());
+            return await removeUserEncryptionTypeMMKV();
+        } else if (auth === true) {
             setUserAuth(true)
             dispatch(setUserSecretDataToRedux({ clientId, privetKey, publicKey, publicKeyB64, serverId, encryptionType, auth, guide, qr, deviceKey }));
             dispatch(setProxy(proxy));
