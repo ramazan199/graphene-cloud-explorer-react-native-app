@@ -41,16 +41,6 @@ export const styles = StyleSheet.create({
         color: '#1B1D28',
         fontSize: 16,
         marginLeft: 19,
-    },
-    logIn: {
-        color: '#87949E',
-        fontSize: 12,
-        fontWeight: "400"
-    },
-    connected: {
-        color: '#39C0B8',
-        fontSize: 12,
-        fontWeight: "400"
     }
 })
 

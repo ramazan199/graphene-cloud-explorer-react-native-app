@@ -1,28 +1,14 @@
 import { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, Switch, Linking, ActivityIndicator, NativeModules, NativeEventEmitter, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, Switch, Linking } from 'react-native';
 import { Layout } from '../../layout';
 import TermsIco from '../../assets/icons/setting/terms.svg';
 import FaqIcon from '../../assets/icons/setting/faq.svg';
-import Microphone from '../../assets/icons/setting/microphone.svg';
 import AboutIcon from '../../assets/icons/setting/about.svg';
 import { styles } from './styles';
-import { getAlexaCredentials, sendAlexaCredentials } from '../../utils/alexa';
-import { useDispatch } from 'react-redux';
-import { openModal } from '../../reducers/modalReducer';
 import { getCellularInfoMMKV, setCellularAccessMMKV } from '../../utils/mmkv';
-import { useErrorAlert } from '../../hooks/useErrorAlert';
 
 export const SettingsScreen = ({ route, navigation }) => {
-    const { LWAModule } = NativeModules;
-    
-    // Create event emitter only if module exists
-    const eventEmitter = LWAModule ? new NativeEventEmitter(LWAModule) : null;
-
     const [isEnabled, setIsEnabled] = useState(false);
-
-    const [alexaWait, setAlexaWait] = useState(false);
-    const [alexaDetails, setAlexaDetails] = useState(null);
-    const dispatch = useDispatch();
 
     const redirectToLandingPage = () => {
         let link = "http://quartztechnologies.org";
@@ -44,72 +30,8 @@ export const SettingsScreen = ({ route, navigation }) => {
         setIsEnabled(info);
     };
 
-    const alexaLogout = () => {
-        setAlexaWait(true);
-        sendAlexaCredentials({
-            authorizationCode: "",
-            clientId: "",
-            redirectURI: ""
-        }).then(() => setAlexaDetails(null))
-            .finally(() => {
-                setAlexaWait(false);
-                LWAModule.logout();
-            });
-    };
-
-    const alexaGetCredentials = async () => {
-        if (alexaDetails == null) {
-            setAlexaWait(true);
-            getAlexaCredentials()
-                .then((res) => LWAModule.login(res.productId, res.codeChallenge, res.dns))
-                .catch((err) => useErrorAlert('alexa error', err))
-                .finally(() => setAlexaWait(false));
-        }
-        else {
-            dispatch(openModal({
-                content: 'If you want log out from Alexa, your will not be able to use Alexa voice assistant',
-                head: "Log out from Alexa account",
-                type: 'confirm',
-                icon: 'check',
-                callback: () => alexaLogout()
-            }));
-        }
-    };
-
-    const checkAlexaLogin = () => {
-        setAlexaWait(true);
-        getAlexaCredentials()
-            .then(response => {
-                if (response?.authorizationCode) {
-                    setAlexaDetails(response);
-                    return;
-                }
-            })
-            .finally(() => setAlexaWait(false));
-    };
-
     useEffect(() => {
-        let subscription;
-        if (eventEmitter) {
-            subscription = eventEmitter.addListener('AmazonAuthEvent', (params) => {
-                if (!params.error) {
-                    setAlexaDetails(params);
-                    sendAlexaCredentials({
-                        authorizationCode: params?.authorizationCode,
-                        clientId: params.clientId,
-                        redirectURI: params.redirectUri
-                    });
-                }
-            });
-        }
-
-        checkAlexaLogin();
         cellularCheck();
-        return () => {
-            if (subscription) {
-                subscription.remove();
-            }
-        };
     }, []);
 
     return (
@@ -128,18 +50,6 @@ export const SettingsScreen = ({ route, navigation }) => {
                 </View>
             </View>
             <View style={styles.listContainer}>
-                <TouchableOpacity style={styles.touchable} onPress={alexaGetCredentials} disabled={alexaWait}>
-                    {alexaWait ? <ActivityIndicator /> : null}
-                    <Microphone />
-                    <View style={{ flexDirection: 'row', flex: 1, justifyContent: 'space-between', alignItems: 'center' }}>
-                        <Text style={styles.touchText}>Alexa voice assistant</Text>
-                        {
-                            alexaDetails !== null
-                                ? <Text style={styles.connected}>Connected</Text>
-                                : <Text style={styles.logIn}>Log In</Text>
-                        }
-                    </View>
-                </TouchableOpacity>
                 <TouchableOpacity style={styles.touchable} onPress={() => navigation.navigate('TermsAndCondition')}>
                     <TermsIco />
                     <Text style={styles.touchText}>Terms & Conditions</Text>

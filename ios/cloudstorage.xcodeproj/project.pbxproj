@@ -12,11 +12,9 @@
 		13B07FC11A68108700A75B9A /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB71A68108700A75B9A /* main.m */; };
 		2E4B1254C2C64732BD84D20D /* noop-file.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5CA1F5B16B14AAB8F2C8020 /* noop-file.swift */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
-		64066C212962495B003ED308 /* LWAModule.m in Sources */ = {isa = PBXBuildFile; fileRef = 64066C202962495B003ED308 /* LWAModule.m */; };
 		646DA00C297189AA00BB1E7B /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 646DA00B297189AA00BB1E7B /* ShareViewController.swift */; };
 		646DA00F297189AA00BB1E7B /* MainInterface.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 646DA00D297189AA00BB1E7B /* MainInterface.storyboard */; };
 		646DA013297189AA00BB1E7B /* Share for uup-cloud.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 646DA009297189AA00BB1E7B /* Share for uup-cloud.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		64BE2C70295C79CF009A76BE /* LoginWithAmazon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 64BE2C6F295C79CF009A76BE /* LoginWithAmazon.framework */; };
 		64C5D450295C749600808A56 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 64C5D44F295C749500808A56 /* Security.framework */; };
 		64C5D452295C749E00808A56 /* SafariServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 64C5D451295C749E00808A56 /* SafariServices.framework */; };
 		96905EF65AED1B983A6B3ABC /* libPods-cloudstorage.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 58EEBF8E8E6FB1BC6CAF49B5 /* libPods-cloudstorage.a */; };
@@ -57,14 +55,11 @@
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = cloudstorage/Info.plist; sourceTree = "<group>"; };
 		13B07FB71A68108700A75B9A /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = main.m; path = cloudstorage/main.m; sourceTree = "<group>"; };
 		58EEBF8E8E6FB1BC6CAF49B5 /* libPods-cloudstorage.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-cloudstorage.a"; sourceTree = BUILT_PRODUCTS_DIR; };
-		64066C1D2962480F003ED308 /* LWAModule.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LWAModule.h; sourceTree = "<group>"; };
-		64066C202962495B003ED308 /* LWAModule.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = LWAModule.m; sourceTree = "<group>"; };
 		646DA009297189AA00BB1E7B /* Share for uup-cloud.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "Share for uup-cloud.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
 		646DA00B297189AA00BB1E7B /* ShareViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareViewController.swift; sourceTree = "<group>"; };
 		646DA00E297189AA00BB1E7B /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/MainInterface.storyboard; sourceTree = "<group>"; };
 		646DA010297189AA00BB1E7B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		646DA01829718FEF00BB1E7B /* Share for uup-cloud.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "Share for uup-cloud.entitlements"; sourceTree = "<group>"; };
-		64BE2C6F295C79CF009A76BE /* LoginWithAmazon.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = LoginWithAmazon.framework; path = Frameworks/LoginWithAmazon.framework; sourceTree = "<group>"; };
 		64C5D44F295C749500808A56 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
 		64C5D451295C749E00808A56 /* SafariServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SafariServices.framework; path = System/Library/Frameworks/SafariServices.framework; sourceTree = SDKROOT; };
 		6C2E3173556A471DD304B334 /* Pods-cloudstorage.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-cloudstorage.debug.xcconfig"; path = "Target Support Files/Pods-cloudstorage/Pods-cloudstorage.debug.xcconfig"; sourceTree = "<group>"; };
@@ -81,7 +76,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				64BE2C70295C79CF009A76BE /* LoginWithAmazon.framework in Frameworks */,
 				64C5D452295C749E00808A56 /* SafariServices.framework in Frameworks */,
 				64C5D450295C749600808A56 /* Security.framework in Frameworks */,
 				96905EF65AED1B983A6B3ABC /* libPods-cloudstorage.a in Frameworks */,
@@ -117,7 +111,6 @@
 		2D16E6871FA4F8E400B85C8A /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				64BE2C6F295C79CF009A76BE /* LoginWithAmazon.framework */,
 				64C5D451295C749E00808A56 /* SafariServices.framework */,
 				64C5D44F295C749500808A56 /* Security.framework */,
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
@@ -147,8 +140,6 @@
 		83CBB9F61A601CBA00E9B192 = {
 			isa = PBXGroup;
 			children = (
-				64066C202962495B003ED308 /* LWAModule.m */,
-				64066C1D2962480F003ED308 /* LWAModule.h */,
 				13B07FAE1A68108700A75B9A /* cloudstorage */,
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				646DA00A297189AA00BB1E7B /* Share for uup-cloud */,
@@ -444,7 +435,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				13B07FBC1A68108700A75B9A /* AppDelegate.mm in Sources */,
-				64066C212962495B003ED308 /* LWAModule.m in Sources */,
 				13B07FC11A68108700A75B9A /* main.m in Sources */,
 				B18059E884C0ABDD17F3DC3D /* ExpoModulesProvider.swift in Sources */,
 				2E4B1254C2C64732BD84D20D /* noop-file.swift in Sources */,

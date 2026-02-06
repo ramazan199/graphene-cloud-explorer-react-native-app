@@ -8,7 +8,6 @@ import ViewItems from '../../components/view-items';
 import { useDispatch, useSelector } from 'react-redux';
 import { UploadProgress } from '../../components/upload-progress';
 import { getCellularInfoMMKV, getLastsMMKV } from '../../utils/mmkv';;
-import AlexaConnection from './alexaConnection';
 import { openModal } from '../../reducers/modalReducer';
 
 
@@ -47,7 +46,6 @@ const HomeScreen = ({ route }) => {
     return (
         <Layout name={route.name} searchBar>
             <UploadProgress />
-            <AlexaConnection />
             <ViewItems content={content} setContent={setContent} name={route.name} reload={connectSql} />
             <FAB
                 style={styles.fab}
