@@ -1,3 +1,5 @@
+## Repo Info
+This Cloud Explorer project continues work originally built by Khayym, intending to extend project by adding features like payment, keycloak account, client side encrrytion etc. and fixing bugs.
 
 ## Run Locally
 

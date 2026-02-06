@@ -37,18 +37,13 @@ const WelcomeScreen = () => {
 
     const authCheck = async () => {
         const { auth, clientId, guide, privetKey, publicKey, publicKeyB64, serverId, encryptionType, qr, deviceKey, proxy } = await getUserSecretDataMMKV();
-        if (!guide) {
-            if (showGuide) {
-                setGuideVisible(true);
-                return;
-            }
-            // Guide disabled: fall back to sign-in flow
-            setUserAuth(false);
-            setGuideVisible(false);
-            dispatch(cleanUserSecretsData());
-            return await removeUserEncryptionTypeMMKV();
-        } else if (auth === true) {
-            setUserAuth(true)
+        if (!guide && showGuide) {
+            setGuideVisible(true);
+            return;
+        }
+        setGuideVisible(false);
+        if (auth === true) {
+            setUserAuth(true);
             dispatch(setUserSecretDataToRedux({ clientId, privetKey, publicKey, publicKeyB64, serverId, encryptionType, auth, guide, qr, deviceKey }));
             dispatch(setProxy(proxy));
             getFavoritesNames().then(favs => {
@@ -62,12 +57,10 @@ const WelcomeScreen = () => {
 
         }
 
-        else {
-            setUserAuth(false)
-            setGuideVisible(false)
-            dispatch(cleanUserSecretsData());
-            return await removeUserEncryptionTypeMMKV()
-        }
+        setUserAuth(false)
+        setGuideVisible(false)
+        dispatch(cleanUserSecretsData());
+        return await removeUserEncryptionTypeMMKV();
     }
 
     useLayoutEffect(() => {
