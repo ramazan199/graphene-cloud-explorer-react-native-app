@@ -74,6 +74,7 @@ export function getCommandName(commandId) {
 }
 
 const maxConcurrentRequest = 2;
+const REQUEST_TIMEOUT_MS = 12000;
 var concurrentRequest = 0;
 let spooler = [];
 
@@ -124,6 +125,8 @@ async function spoolingRequest() {
         store.getState().proxyManager.proxy +
         '/data?cid=' +
         encodeURIComponent(store.getState().userSecret.clientId);
+      console.log('url set to: ' + url);
+
       let purpose;
 
       if (commandId == command.SetClient || commandId == command.GetEncryptedQR) {
@@ -133,14 +136,43 @@ async function spoolingRequest() {
       }
 
       if (purpose === getCommandName(command.GetEncryptedQR)) {
-        // request.send(data);
-        axios.post(url, data).then((response) => {
+        const controller = new AbortController();
+        const signal = controller.signal;
+        let reqTimeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+        let lowInternet = setTimeout(() => {
+          store.dispatch(
+            openModal({
+              head: 'Pay attention',
+              content: 'Your internet connection is slow',
+              type: 'info',
+              icon: 'ex',
+            })
+          );
+        }, REQUEST_TIMEOUT_MS);
+        try {
+          const response = await axios.post(url, data, { timeout: REQUEST_TIMEOUT_MS, signal });
           onCommandResponse.GetEncryptedQR(response.data);
-        });
+        } catch (error) {
+          // store.dispatch(
+          //   openModal({
+          //     head: 'Failed to connect',
+          //     content:
+          //       'Failed to fetch encrypted QR data. Please check the Cloud Box connection and try again.',
+          //     type: 'info',
+          //     icon: 'ex',
+          //   })
+          // );
+          console.log('Error fetching encrypted QR data:', error);
+          return error;
+        } finally {
+          clearTimeout(reqTimeout);
+          clearTimeout(lowInternet);
+          requestDone();
+        }
       } else if (commandId == command.SetClient) {
         const controller = new AbortController();
         const signal = controller.signal;
-        let reqTimeout = setTimeout(() => controller.abort(), 6000);
+        let reqTimeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
         let lowInternet = setTimeout(() => {
           store.dispatch(openModal({
             head: 'Pay attention',
@@ -148,9 +180,9 @@ async function spoolingRequest() {
             type: 'info',
             icon: 'ex',
           }))
-        }, 6000)
+        }, REQUEST_TIMEOUT_MS)
         try {
-          const response = await axios.post(url, data, { timeout: 6000, signal });
+          const response = await axios.post(url, data, { timeout: REQUEST_TIMEOUT_MS, signal });
           clearTimeout(reqTimeout);
           clearTimeout(lowInternet);
           return handleResponse(response);
@@ -172,7 +204,7 @@ async function spoolingRequest() {
       } else if (get) {
         const controller = new AbortController();
         const signal = controller.signal;
-        let reqTimeout = setTimeout(() => controller.abort(), 6000);
+        let reqTimeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
         let lowInternet = setTimeout(() => {
           store.dispatch(openModal({
             head: 'Pay attention',
@@ -180,9 +212,9 @@ async function spoolingRequest() {
             type: 'info',
             icon: 'ex',
           }))
-        }, 6000)
+        }, REQUEST_TIMEOUT_MS)
         try {
-          const response = await axios.get(url, { timeout: 6000, signal });
+          const response = await axios.get(url, { timeout: REQUEST_TIMEOUT_MS, signal });
           clearTimeout(reqTimeout);
           clearTimeout(lowInternet);
           return handleResponse(response);
@@ -201,7 +233,7 @@ async function spoolingRequest() {
           .then(async (encrypted) => {
             const controller = new AbortController();
             const signal = controller.signal;
-            let reqTimeout = setTimeout(() => controller.abort(), 6000);
+            let reqTimeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
             let lowInternet = setTimeout(() => {
               store.dispatch(openModal({
                 head: 'Pay attention',
@@ -209,9 +241,9 @@ async function spoolingRequest() {
                 type: 'info',
                 icon: 'ex',
               }))
-            }, 6000)
+            }, REQUEST_TIMEOUT_MS)
             try {
-              const response = await axios.post(url, encrypted, { timeout: 6000, signal });
+              const response = await axios.post(url, encrypted, { timeout: REQUEST_TIMEOUT_MS, signal });
               let decrypted = handleResponse(response);
               clearTimeout(reqTimeout);
               clearTimeout(lowInternet);

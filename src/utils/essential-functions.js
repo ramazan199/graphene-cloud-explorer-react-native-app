@@ -29,6 +29,7 @@ import {
 import { setAuthWait, setUserSecretDataToRedux } from '../reducers/userSecretDataReducer';
 import { URL } from 'react-native-url-polyfill';
 import { setProxy } from '../reducers/proxyReducer';
+import { log } from 'react-native-reanimated';
 
 export function formatBytes(a, b = 2) {
     if (!+a) return '0 Bytes';
@@ -115,28 +116,22 @@ export async function onQrCodeAcquires(qrCode) {
 }
 
 async function entryPointToProxy(ep) {
-    // if (ep == null || ep == '') {
-    //     ep = 'server.cloudservices.agency';
-    // } else if (ep.indexOf('.') == -1) {
-    //     ep = ep + '.cloudservices.agency';
-    // }
-    // let json = await resolveDNS(ep);
-    // if (json.Answer && json.Answer.length > 0) {
-    //     ep = json.Answer[0].data;
-    // }
-    // if (!ep.startsWith('http')) {
-    //     ep = 'http://' + ep;
-    // }
-    // ep = "http://195.20.235.5:5050";
-    ep  = "http://proxy.tc0.it:5050";
-    store.dispatch(setProxy(ep));
-    await setProxyMMKV(ep);
-    let proxy = store.getState().proxyManager.proxy;
-    if (proxy.replace('://', '').indexOf(':') == -1) {
-        store.dispatch(setProxy(proxy + ':' + 5050));
-        await setProxyMMKV(proxy + ':' + 5050);
-        // proxy += ":" + defaultProxyPort;
+    if (!ep) {
+        ep = 'proxy.cloudservices.agency';
     }
+    if (!ep.startsWith('http://') && !ep.startsWith('https://')) {
+        ep = 'http://' + ep;
+    }
+
+    let proxy = ep;
+    if (proxy.replace('://', '').indexOf(':') == -1) {
+        proxy = proxy + ':' + 5050;
+    }
+    // proxy = "http://proxy.tc0.it:5050";
+    console.log('Proxy set to: ' + proxy);
+
+    store.dispatch(setProxy(proxy));
+    await setProxyMMKV(proxy);
 }
 
 async function resolveDNS(url) {
