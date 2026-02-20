@@ -78,6 +78,15 @@ import org.apache.tools.ant.taskdefs.condition.Os
  * ]
  */
 
+def secretsPropertiesFile = rootProject.file("gradle-s.properties") 
+def secretsProperties = new Properties()
+
+if (secretsPropertiesFile.exists()) {
+    secretsProperties.load(new FileInputStream(secretsPropertiesFile))
+} else {
+    throw new GradleException("Could not find gradle-s.properties file!")
+}
+
 def projectRoot = rootDir.getAbsoluteFile().getParentFile().getAbsolutePath()
 
 def reactNativeRoot = new File(["node", "--print", "require.resolve('react-native/package.json')"].execute(null, rootDir).text.trim()).getParentFile().getAbsolutePath()
@@ -136,6 +145,12 @@ def enableHermes = project.ext.react.get("enableHermes", false);
 def reactNativeArchitectures() {
     def value = project.getProperties().get("reactNativeArchitectures")
     return value ? value.split(",") : ["armeabi-v7a", "x86", "x86_64", "arm64-v8a"]
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
 }
 
 android {
@@ -246,10 +261,10 @@ android {
         //     }
         // }
           release {
-            storeFile file('')
-            storePassword ''
-            keyAlias ''
-            keyPassword ''
+            storeFile file(secretsProperties['APP_UPLOAD_STORE_FILE'])
+            storePassword secretsProperties['APP_UPLOAD_STORE_PASSWORD']
+            keyAlias secretsProperties['APP_UPLOAD_KEY_ALIAS']
+            keyPassword secretsProperties['APP_UPLOAD_KEY_PASSWORD']
         }
         
         debug {

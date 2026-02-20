@@ -116,3 +116,7 @@ web-build/
 dist/
 
 # @end expo-cli
+
+# Secrets file for release keys
+android/gradle-s.properties
+run-android.ps1
