@@ -75,3 +75,9 @@ export PATH=$PATH:$ANDROID_SDK_ROOT/platform-tools
 Follow the Watchman installation guide to compile and install Watchman from source.
 
 Watchman is a tool by Facebook for watching changes in the filesystem. It is highly recommended you install it for better performance and increased compatibility in certain edge cases (translation: you may be able to get by without installing this, but your mileage may vary; installing this now may save you from a headache later).
+
+Note: add gradle-s.properties file in android folder with this keys:
+APP_UPLOAD_STORE_FILE=
+APP_UPLOAD_STORE_PASSWORD=
+APP_UPLOAD_KEY_ALIAS=
+APP_UPLOAD_KEY_PASSWORD=
