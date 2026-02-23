@@ -6278,7 +6278,7 @@ expo-modules-autolinking@1.0.2:
     find-up "^5.0.0"
     fs-extra "^9.1.0"
 
-expo-modules-core@1.1.1, expo-modules-core@^1.0.4:
+expo-modules-core@1.1.1:
   version "1.1.1"
   resolved "https://registry.npmjs.org/expo-modules-core/-/expo-modules-core-1.1.1.tgz"
   integrity sha512-+AcaYmaWphIfkBcccu65dyOhWnpOJ3+SQpoI4lI/Plg1nNjOLuBjmrdVvpiJOvkN+CqbNGsJ5Yll8LLk+C107Q==
@@ -9900,9 +9900,9 @@ react-native-popup-menu@^0.16.1:
   resolved "https://registry.npmjs.org/react-native-popup-menu/-/react-native-popup-menu-0.16.1.tgz"
   integrity sha512-xRS7mRh0exwu7Iw8PPVHdM11d13A/KzYjy0/fZx3zVtxISxPkNaDGayau6oa7HqO3Nj0oS9ulFCYjcQfG6vahA==
 
-react-native-quick-base64@^2.0.5:
+react-native-quick-base64@2.0.5:
   version "2.0.5"
-  resolved "https://registry.npmjs.org/react-native-quick-base64/-/react-native-quick-base64-2.0.5.tgz"
+  resolved "https://registry.yarnpkg.com/react-native-quick-base64/-/react-native-quick-base64-2.0.5.tgz#461a0748f65bf83befa1c4159749d781440796c0"
   integrity sha512-waRcIlchdLCSzpWYqRNIN5NyE5PxKyedMQ/sTgA/fcEkBzwp3EOwjhsfVuJuBtc1bHL2Mg34pxDVBxyLU3Mu2Q==
   dependencies:
     base64-js "^1.5.1"
