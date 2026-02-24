@@ -14,8 +14,24 @@ import {
 } from 'react-native-confirmation-code-field';
 import { ActivityIndicator } from "react-native-paper"
 import MarkIcon from '../../../assets/icons/modal/exmark.svg'
+import crashlytics from '@react-native-firebase/crashlytics';
 
 const CELL_COUNT = 6;
+
+const reportCrash = (error, attrs = {}) => {
+    const normalizedError = error instanceof Error ? error : new Error(String(error));
+    const normalizedAttrs = Object.keys(attrs).reduce((acc, key) => {
+        const value = attrs[key];
+        if (value !== undefined && value !== null) acc[key] = String(value);
+        return acc;
+    }, {});
+
+    crashlytics().setAttributes({
+        screen: 'PasswordModal',
+        ...normalizedAttrs,
+    });
+    crashlytics().recordError(normalizedError);
+};
 
 export const PasswordModal = ({ barcode, setScanned, cancel }) => {
 
@@ -53,13 +69,16 @@ export const PasswordModal = ({ barcode, setScanned, cancel }) => {
 
         dispatch(setUserSecretDataToRedux({ devicePin: value }));
         try {
-            generateKeyRSA()
-                .then(async () => {
-                    await onQrCodeAcquires(barcode.trim());
-                    setError(false)
-                    // setWait(false);
-                })
+            await generateKeyRSA();
+            await onQrCodeAcquires(barcode.trim());
+            setError(false)
+            // setWait(false);
         } catch (error) {
+            reportCrash(error, {
+                flow: 'handleLogIn',
+                pinLength: value?.length,
+                hasBarcode: !!barcode,
+            });
             setError(true)
         }
     }

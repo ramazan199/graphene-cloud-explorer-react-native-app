@@ -12,6 +12,23 @@ import { openModal } from '../../reducers/modalReducer';
 import { setUserSecretDataToRedux } from '../../reducers/userSecretDataReducer';
 import { devices } from '../../constants/boxes';
 import crashlytics from '@react-native-firebase/crashlytics';
+
+const reportCrash = (error, attrs = {}) => {
+  const normalizedError = error instanceof Error ? error : new Error(String(error));
+  const normalizedAttrs = Object.keys(attrs).reduce((acc, key) => {
+    const value = attrs[key];
+    if (value !== undefined && value !== null) acc[key] = String(value);
+    return acc;
+  }, {});
+
+  crashlytics().setAttributes({
+    screen: 'SignInScreen',
+    ...normalizedAttrs,
+  });
+  crashlytics().recordError(normalizedError);
+  console.log('Reported crash:', normalizedError, normalizedAttrs);
+};
+
 export const SignInScreen = ({ navigation: { navigate }, route }) => {
 
 
@@ -30,9 +47,14 @@ export const SignInScreen = ({ navigation: { navigate }, route }) => {
       );
     } else if (connection === true) {
       dispatch(setUserSecretDataToRedux({ devicePin: devices.andrea2['pin'] }));
-      generateKeyRSA().then(() => {
-        onQrCodeAcquires(devices.andrea['enc']);
-      });
+      generateKeyRSA()
+        .then(() => onQrCodeAcquires(devices.andrea['enc']))
+        .catch((error) => {
+          reportCrash(error, {
+            flow: 'signInCredentials',
+            connection,
+          });
+        });
     } else return null;
   };
 
@@ -62,18 +84,31 @@ export const SignInScreen = ({ navigation: { navigate }, route }) => {
           <View style={styles.buttonView}>
             <Button text="Open camera" callback={() => navigate('QRScreen')} />
             <Text style={{ alignSelf: 'center' }}>or</Text>
-            {/* <Button text="Enter QR code manually" callback={() => navigate('SingInViaTextScreen')} /> */}
-            <Button text="Test Crash" callback={() =>  {console.log('User clicked pay button');  crashlytics().recordError(new Error("Test Non-Fatal Error"));
-              crashlytics().log('User clicked pay button');crashlytics().crash(); console.log('CRASH BUTTON PRESSED');}} />
+            <Button text="Enter QR code manually" callback={() => navigate('SingInViaTextScreen')} />
+            
             {/* <TouchableOpacity onPress={singInCredentials}>
               <Text style={{ alignSelf: 'center' }}>Sing in with Credentials</Text>
             </TouchableOpacity> */}
           </View>
-          <View style={styles.viewGuideContainer}>
-            <CustomText color="#000">New to Cloud Services?</CustomText>
+          <View style={styles.buttonView}>
+            {/* <CustomText color="#000">New to Cloud Services?</CustomText>
             <TouchableOpacity style={styles.viewGuide} onPress={() => navigate('ViewGuideScreen')}>
               <Text style={styles.viewGuideText}>View Guide</Text>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
+             <Button
+              text="Test Crash Reporting"
+              callback={() => {
+                console.log('User clicked pay button');
+                crashlytics().setAttributes({
+                  screen: 'SignInScreen',
+                  flow: 'testCrashButton',
+                });
+                crashlytics().recordError(new Error('Test Non-Fatal Error'));
+                crashlytics().log('User clicked pay button');
+                crashlytics().crash();
+                console.log('CRASH BUTTON PRESSED');
+              }}
+            />
           </View>
         </View>
       </View>

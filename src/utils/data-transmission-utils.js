@@ -48,9 +48,28 @@ import {
 import { enqueue, forceEnqueue } from '../reducers/refreshQueueReducer';
 import { useErrorAlert } from '../hooks/useErrorAlert';
 import { parseSingle } from './parser';
+import crashlytics from '@react-native-firebase/crashlytics';
 
 var download = [];
 var upload = [];
+
+const reportCrash = (error, attrs = {}) => {
+  const normalizedError = error instanceof Error ? error : new Error(String(error));
+  const normalizedAttrs = Object.keys(attrs).reduce((acc, key) => {
+    const value = attrs[key];
+    if (value !== undefined && value !== null) acc[key] = String(value);
+    return acc;
+  }, {});
+
+  crashlytics().setAttributes({
+    screen: 'DataTransmission',
+    ...normalizedAttrs,
+  });
+  crashlytics().recordError(normalizedError);
+  console.log('Reported crash:', normalizedError, normalizedAttrs);
+};
+
+const makeUtilMarker = (flow) => `UTIL_FLOW_${flow}_${Date.now()}`;
 
 function bytesToSize(bytes) {
   var sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
@@ -153,6 +172,8 @@ async function spoolingRequest() {
           const response = await axios.post(url, data, { timeout: REQUEST_TIMEOUT_MS, signal });
           onCommandResponse.GetEncryptedQR(response.data);
         } catch (error) {
+          const utilMarker = makeUtilMarker('getEncryptedQrRequest');
+          crashlytics().log(utilMarker);
           // store.dispatch(
           //   openModal({
           //     head: 'Failed to connect',
@@ -163,6 +184,12 @@ async function spoolingRequest() {
           //   })
           // );
           console.log('Error fetching encrypted QR data:', error);
+          reportCrash(error, {
+            flow: 'getEncryptedQrRequest',
+            commandId,
+            proxy: store.getState().proxyManager.proxy,
+            utilMarker,
+          });
           return error;
         } finally {
           clearTimeout(reqTimeout);
@@ -187,6 +214,14 @@ async function spoolingRequest() {
           clearTimeout(lowInternet);
           return handleResponse(response);
         } catch (error) {
+          const utilMarker = makeUtilMarker('setClientRequest');
+          crashlytics().log(utilMarker);
+          reportCrash(error, {
+            flow: 'setClientRequest',
+            commandId,
+            proxy: store.getState().proxyManager.proxy,
+            utilMarker,
+          });
           clearTimeout(reqTimeout);
           clearTimeout(lowInternet);
           spooler = [];
@@ -219,6 +254,14 @@ async function spoolingRequest() {
           clearTimeout(lowInternet);
           return handleResponse(response);
         } catch (error) {
+          const utilMarker = makeUtilMarker('getRequest');
+          crashlytics().log(utilMarker);
+          reportCrash(error, {
+            flow: 'getRequest',
+            commandId,
+            proxy: store.getState().proxyManager.proxy,
+            utilMarker,
+          });
           return error;
         }
       } else {
@@ -249,6 +292,14 @@ async function spoolingRequest() {
               clearTimeout(lowInternet);
               return decrypted;
             } catch (error) {
+              const utilMarker = makeUtilMarker('encryptedPostRequest');
+              crashlytics().log(utilMarker);
+              reportCrash(error, {
+                flow: 'encryptedPostRequest',
+                commandId,
+                proxy: store.getState().proxyManager.proxy,
+                utilMarker,
+              });
               clearTimeout(reqTimeout);
               clearTimeout(lowInternet);
               store.dispatch(
@@ -266,10 +317,25 @@ async function spoolingRequest() {
             }
           })
           .catch((error) => {
+            const utilMarker = makeUtilMarker('encryptDataForTheDevice');
+            crashlytics().log(utilMarker);
+            reportCrash(error, {
+              flow: 'encryptDataForTheDevice',
+              commandId,
+              proxy: store.getState().proxyManager.proxy,
+              utilMarker,
+            });
             useErrorAlert('Encryption error:', error);
           });
       }
-    } catch {
+    } catch (error) {
+      const utilMarker = makeUtilMarker('spoolingRequest');
+      crashlytics().log(utilMarker);
+      reportCrash(error, {
+        flow: 'spoolingRequest',
+        proxy: store.getState().proxyManager.proxy,
+        utilMarker,
+      });
       concurrentRequest++;
     }
   }

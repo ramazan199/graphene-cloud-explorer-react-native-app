@@ -7,6 +7,7 @@ import { Layout } from '../../layout';
 import { useSelector } from 'react-redux';
 import { paymentApiClient } from '../../utils/apiClient';
 import { ROUTES } from '../../navigation/types';
+import crashlytics from '@react-native-firebase/crashlytics';
 
 const PLANS = {
     STANDARD: {
@@ -23,6 +24,22 @@ const PLANS = {
             '300 GB Storage',
         ]
     }
+};
+
+const reportCrash = (error, attrs = {}) => {
+    const normalizedError = error instanceof Error ? error : new Error(String(error));
+    const normalizedAttrs = Object.keys(attrs).reduce((acc, key) => {
+        const value = attrs[key];
+        if (value !== undefined && value !== null) acc[key] = String(value);
+        return acc;
+    }, {});
+
+    crashlytics().setAttributes({
+        screen: 'PaymentScreen',
+        ...normalizedAttrs,
+    });
+    crashlytics().recordError(normalizedError);
+    console.log('Reported crash:', normalizedError, normalizedAttrs);
 };
 
 export default function PaymentScreen ({ route, navigation }) {
@@ -45,6 +62,9 @@ export default function PaymentScreen ({ route, navigation }) {
         });
         
         if (error) {
+            reportCrash(new Error(`Payment sheet init failed: ${error.message || 'unknown error'}`), {
+                flow: 'initializePaymentSheet',
+            });
             Alert.alert('Error', 'Unable to initialize payment');
         }
     };
@@ -69,6 +89,10 @@ export default function PaymentScreen ({ route, navigation }) {
             
             await initializePaymentSheet(clientSecret);
         } catch (error) {
+            reportCrash(error, {
+                flow: 'fetchPaymentIntent',
+                planName,
+            });
             Alert.alert('Error', 'Unable to initiate payment');
         } finally {
             setIsLoading(false);
@@ -81,30 +105,42 @@ export default function PaymentScreen ({ route, navigation }) {
     };
 
     const openPaymentSheet = async () => {
-        const { error } = await presentPaymentSheet();
-        if (error) {
-            Alert.alert(`Payment failed: ${error.message}`);
-            setClientSecrets(prev => ({
-                ...prev,
-                [selectedPlan]: null
-            }));
-        } else {
-            Alert.alert(
-                'Success', 
-                'Your subscription has been activated!',
-                [
-                    {
-                        text: 'OK',
-                        onPress: () => {
-                            setClientSecrets({
-                                STANDARD: null,
-                                PREMIUM: null
-                            });
-                            navigation.navigate(ROUTES.TAB_NAVIGATOR);
+        try {
+            const { error } = await presentPaymentSheet();
+            if (error) {
+                reportCrash(new Error(`Payment failed: ${error.message || 'unknown error'}`), {
+                    flow: 'openPaymentSheet',
+                    planName: selectedPlan,
+                });
+                Alert.alert(`Payment failed: ${error.message}`);
+                setClientSecrets(prev => ({
+                    ...prev,
+                    [selectedPlan]: null
+                }));
+            } else {
+                Alert.alert(
+                    'Success',
+                    'Your subscription has been activated!',
+                    [
+                        {
+                            text: 'OK',
+                            onPress: () => {
+                                setClientSecrets({
+                                    STANDARD: null,
+                                    PREMIUM: null
+                                });
+                                navigation.navigate(ROUTES.TAB_NAVIGATOR);
+                            }
                         }
-                    }
-                ]
-            );
+                    ]
+                );
+            }
+        } catch (error) {
+            reportCrash(error, {
+                flow: 'openPaymentSheetException',
+                planName: selectedPlan,
+            });
+            Alert.alert('Error', 'Unable to present payment sheet');
         }
     };
 

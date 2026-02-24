@@ -5,11 +5,28 @@ import { StyleSheet, Text, View, Image, TouchableOpacity } from 'react-native';
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import { useNavigation } from '@react-navigation/native';
+import crashlytics from '@react-native-firebase/crashlytics';
 import { ROUTES } from '../../navigation/types';
 import { Button } from '../button';
 import { CustomText } from '../text';
 
 WebBrowser.maybeCompleteAuthSession();
+
+const reportCrash = (error, attrs = {}) => {
+  const normalizedError = error instanceof Error ? error : new Error(String(error));
+  const normalizedAttrs = Object.keys(attrs).reduce((acc, key) => {
+    const value = attrs[key];
+    if (value !== undefined && value !== null) acc[key] = String(value);
+    return acc;
+  }, {});
+
+  crashlytics().setAttributes({
+    screen: 'SignInUp',
+    ...normalizedAttrs,
+  });
+  crashlytics().recordError(normalizedError);
+  console.log('Reported crash:', normalizedError, normalizedAttrs);
+};
 
 export default function SignInUp () {
   const navigation = useNavigation();
@@ -52,6 +69,11 @@ export default function SignInUp () {
       
     } catch (error) {
       console.error('Token exchange failed:', error);
+      reportCrash(error, {
+        flow: 'exchangeCodeForToken',
+        hasCode: !!code,
+        hasCodeVerifier: !!codeVerifier,
+      });
     }
   };
 
