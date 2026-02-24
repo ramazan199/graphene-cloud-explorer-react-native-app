@@ -120,3 +120,4 @@ dist/
 # Secrets file for release keys
 android/gradle-s.properties
 run-android.ps1
+android/app/google-services.json

@@ -11,7 +11,7 @@ import { permissionCheck } from '../../utils/permissions';
 import { openModal } from '../../reducers/modalReducer';
 import { setUserSecretDataToRedux } from '../../reducers/userSecretDataReducer';
 import { devices } from '../../constants/boxes';
-
+import crashlytics from '@react-native-firebase/crashlytics';
 export const SignInScreen = ({ navigation: { navigate }, route }) => {
 
 
@@ -62,7 +62,9 @@ export const SignInScreen = ({ navigation: { navigate }, route }) => {
           <View style={styles.buttonView}>
             <Button text="Open camera" callback={() => navigate('QRScreen')} />
             <Text style={{ alignSelf: 'center' }}>or</Text>
-            <Button text="Enter QR code manually" callback={() => navigate('SingInViaTextScreen')} />
+            {/* <Button text="Enter QR code manually" callback={() => navigate('SingInViaTextScreen')} /> */}
+            <Button text="Test Crash" callback={() =>  {console.log('User clicked pay button');  crashlytics().recordError(new Error("Test Non-Fatal Error"));
+              crashlytics().log('User clicked pay button');crashlytics().crash(); console.log('CRASH BUTTON PRESSED');}} />
             {/* <TouchableOpacity onPress={singInCredentials}>
               <Text style={{ alignSelf: 'center' }}>Sing in with Credentials</Text>
             </TouchableOpacity> */}
