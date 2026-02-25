@@ -3,7 +3,7 @@ import { setData } from "../reducers/testReducer";
 import { store } from "../store"
 import { addToGroup, copy, createDir, delete_, getFavoritesNames, getFile, move, removeFromGroup, rename } from "./data-transmission-utils"
 import { chunkSize } from "../constants";
-import { fileExistsCheck, mkFolder, writeFileToLocal } from "./local-files";
+import { fileExistsCheck, mkFolder, registerDownloadedPath, writeFileToLocal } from "./local-files";
 import { groupsByFolder, locationGenerator, parseFile, storageInfo } from "./essential-functions";
 import Share from 'react-native-share';
 import DocumentPicker from 'react-native-document-picker'
@@ -38,11 +38,15 @@ export const downloadFile = async () => {
     if (downloadQueue.includes(editedFile.path)) return;
 
     store.dispatch(downloadSetQueue(editedFile.path));
-    const file = await getFile(editedFile.path, 1)
-    const folder = await mkFolder(file);
-    await writeFileToLocal(file.data, editedFile.name, folder);
-    await addToMMKV(editedFile);
-    store.dispatch(downloadRemoveQueue(editedFile.path));
+    try {
+        const file = await getFile(editedFile.path, 1)
+        const folder = await mkFolder(file);
+        const savedPath = await writeFileToLocal(file.data, editedFile.name, folder);
+        registerDownloadedPath(editedFile.path, savedPath);
+        await addToMMKV(editedFile);
+    } finally {
+        store.dispatch(downloadRemoveQueue(editedFile.path));
+    }
 }
 
 const pathSplitter = (path) => {

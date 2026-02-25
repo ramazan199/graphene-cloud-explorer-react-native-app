@@ -41,7 +41,9 @@ export const newFileTransferReducer = createSlice({
         },
 
         downloadSetQueue: (state, action) => {
-            state.downloadQueue.push(action.payload);
+            if (!state.downloadQueue.includes(action.payload)) {
+                state.downloadQueue.push(action.payload);
+            }
         },
 
         downloadRemoveQueue: (state, action) => {

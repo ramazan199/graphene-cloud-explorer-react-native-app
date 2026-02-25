@@ -71,7 +71,7 @@ export const Row = ({ item, contentSetter }) => {
     const filePress = async (file) => {
         if (multiSelectCheck(file) === true) return;
 
-        const { uri, mime, source } = await fileExistsCheck(file);
+        const { uri, mime, source } = await fileExistsCheck(file) || {};
         if (uri || source) {
             return openFileNatively(uri, mime, source);
         }
