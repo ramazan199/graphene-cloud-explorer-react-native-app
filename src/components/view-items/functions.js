@@ -13,7 +13,7 @@ export const downloadManager = (dispatch, name, file, queue, network) => {
     dispatch(setSelectedFile(file));
 
 
-    if (queue.includes(file.name)) {
+    if (queue.includes(file.path)) {
         dispatch(openModal({
             content: 'File already in progress',
             head: file.name,

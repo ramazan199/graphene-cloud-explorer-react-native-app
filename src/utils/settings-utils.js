@@ -31,15 +31,17 @@ let currentScreenList = {
 }
 
 export const downloadFile = async () => {
-    const { files: { selectedFile, location }, bottomSheetManager: { fromScreen } } = store.getState();
+    const { files: { selectedFile, location }, bottomSheetManager: { fromScreen }, newFileTransfer: { downloadQueue } } = store.getState();
     const editedFile = { ...selectedFile, location: fromScreen === 'CloudScreen' ? location : selectedFile.location }
+
+    if (downloadQueue.includes(editedFile.path)) return;
 
     store.dispatch(downloadSetQueue(editedFile.path));
     const file = await getFile(editedFile.path, 1)
     const folder = await mkFolder(file);
     await writeFileToLocal(file.data, editedFile.name, folder);
     await addToMMKV(editedFile);
-    store.dispatch(downloadRemoveQueue(editedFile.name));
+    store.dispatch(downloadRemoveQueue(editedFile.path));
 }
 
 const pathSplitter = (path) => {
