@@ -83,6 +83,7 @@ const REQUEST_TIMEOUT_MS = 30000;
 const SLOW_INTERNET_THRESHOLD_MS = 7000;
 var concurrentRequest = 0;
 let spooler = [];
+const shouldShowSlowInternetModal = (commandId) => commandId !== command.GetFile;
 
 DeviceEventEmitter.addListener('spoolerCleaner', () => {
   spooler = [];
@@ -90,10 +91,12 @@ DeviceEventEmitter.addListener('spoolerCleaner', () => {
 });
 
 export function executeRequest(commandId, data) {
-  if (commandId === 8) MinHeap.push(spooler, [10, [commandId, data]]);
-  else if (commandId === 19) MinHeap.push(spooler, [8, [commandId, data]]);
-  else MinHeap.push(spooler, [5, [commandId, data]]);
-  return spoolingRequest();
+  return new Promise((resolve, reject) => {
+    if (commandId === 8) MinHeap.push(spooler, [10, [commandId, data, resolve, reject]]);
+    else if (commandId === 19) MinHeap.push(spooler, [8, [commandId, data, resolve, reject]]);
+    else MinHeap.push(spooler, [5, [commandId, data, resolve, reject]]);
+    spoolingRequest();
+  });
 }
 
 function requestDone() {
@@ -106,7 +109,7 @@ function requestDone() {
 async function spoolingRequest() {
   console.log('Concurrent requests:', concurrentRequest);
 
-  if (concurrentRequest < maxConcurrentRequest) {
+  if (concurrentRequest < maxConcurrentRequest && spooler.length > 0) {
     concurrentRequest++;
     // -try
     try {
@@ -116,6 +119,8 @@ async function spoolingRequest() {
       console.log('Priority: ', priority, ', CommandId:', getCommandName(toProcessing[0]));
       let commandId = toProcessing[0];
       let data = toProcessing[1];
+      let resolve = toProcessing[2];
+      let reject = toProcessing[3];
 
       if (commandId == null) {
         console.log('Command does not exist');
@@ -141,7 +146,7 @@ async function spoolingRequest() {
         url += '&purpose=' + getCommandName(commandId); // SetClient Parameter is used only in debug that indicates whether a public encryption key is sent to the device. In releise the key is never sent it must be scanned by QR code
       }
 
-      try {
+      const workPromise = (async () => {
         if (purpose === getCommandName(command.GetEncryptedQR)) {
           const controller = new AbortController();
           const signal = controller.signal;
@@ -163,7 +168,7 @@ async function spoolingRequest() {
           }, SLOW_INTERNET_THRESHOLD_MS);
           try {
             const response = await axios.post(url, data, { timeout: REQUEST_TIMEOUT_MS, signal });
-            onCommandResponse.GetEncryptedQR(response.data);
+            return onCommandResponse.GetEncryptedQR(response.data);
           } catch (error) {
             console.log('Error fetching encrypted QR data:', error);
             reportCrash(error, {
@@ -267,18 +272,20 @@ async function spoolingRequest() {
               const controller = new AbortController();
               const signal = controller.signal;
               let reqTimeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
-              let lowInternet = setTimeout(() => {
-                store.dispatch(openModal({
-                  head: 'Pay attention',
-                  content: 'Your internet connection is slow. Would you like to retry?',
-                  type: 'confirm',
-                  buttonText: 'Retry',
-                  icon: 'ex',
-                  callback: () => {
-                    controller.abort();
-                  }
-                }))
-              }, SLOW_INTERNET_THRESHOLD_MS)
+              let lowInternet = shouldShowSlowInternetModal(commandId)
+                ? setTimeout(() => {
+                  store.dispatch(openModal({
+                    head: 'Pay attention',
+                    content: 'Your internet connection is slow. Would you like to retry?',
+                    type: 'confirm',
+                    buttonText: 'Retry',
+                    icon: 'ex',
+                    callback: () => {
+                      controller.abort();
+                    }
+                  }))
+                }, SLOW_INTERNET_THRESHOLD_MS)
+                : null;
               try {
                 const response = await axios.post(url, encrypted, { timeout: REQUEST_TIMEOUT_MS, signal });
                 const result = await handleResponse(response);
@@ -319,15 +326,19 @@ async function spoolingRequest() {
               });
             });
         }
-      } finally {
-        requestDone();
-      }
+      })();
+
+      workPromise
+        .then((result) => resolve?.(result))
+        .catch((error) => reject?.(error));
     } catch (error) {
       reportCrash(error, {
         screen: 'DataTransmission',
         flow: 'spoolingRequest',
         proxy: store.getState().proxyManager.proxy,
       });
+    } finally {
+      requestDone();
     }
   }
 }
