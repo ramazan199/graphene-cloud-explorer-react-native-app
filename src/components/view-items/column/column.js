@@ -20,7 +20,7 @@ export const Column = ({ item, contentSetter }) => {
 
     const { bottomSheetController } = useContextApi();
     const { selectedFiles, favorites, found } = useSelector(state => state.files);
-    const { downloadQueue } = useSelector(state => state.newFileTransfer)
+    const { downloadQueue, downloadProgress } = useSelector(state => state.newFileTransfer)
     const networkInformation = useSelector(state => state.network);
     const dispatch = useDispatch();
     const { name } = useRoute();
@@ -102,7 +102,12 @@ export const Column = ({ item, contentSetter }) => {
             onLongPress={() => onLongPressHandler(item)}
             style={[item.type === 'folder' ? { ...ColumnStyles.container, borderColor: "#00000043" } : ColumnStyles.container, item.name === found && { borderColor: '#5D82F5' }, selectedFiles.includes(item) && { borderColor: '#1a4feb' }]}>
             {checkIsFav(item.path)}
-            {downloadQueue.includes(item.name) && <DownloadIcon style={ColumnStyles.overlayDownload} />}
+            {downloadQueue.includes(item.path) && <DownloadIcon style={ColumnStyles.overlayDownload} />}
+            {downloadQueue.includes(item.path) && (
+                <Text style={ColumnStyles.overlayProgress}>
+                    {downloadProgress[item.path] ?? 0}%
+                </Text>
+            )}
             <View style={ColumnStyles.left}>
                 {selectedFiles.includes(item) && <AntDesign name="checkcircleo" size={20} color="#5D82F5" style={ColumnStyles.overlay} />}
 

@@ -18,7 +18,7 @@ import { downloadManager, openFileNatively, titleShortener } from '../functions'
 export const Row = ({ item, contentSetter }) => {
     const { bottomSheetController } = useContextApi();
     const { selectedFiles, favorites, found } = useSelector(state => state.files);
-    const { downloadQueue } = useSelector(state => state.newFileTransfer);
+    const { downloadQueue, downloadProgress } = useSelector(state => state.newFileTransfer);
     const networkInformation = useSelector(state => state.network);
     const dispatch = useDispatch();
     const { name } = useRoute();
@@ -107,6 +107,11 @@ export const Row = ({ item, contentSetter }) => {
                 {selectedFiles.includes(item) && <AntDesign name="checkcircleo" size={20} color="#5D82F5" style={rowStyles.overlay} />}
                 {checkIsFav(item.path)}
                 {downloadQueue.includes(item.path) && <DownloadIcon style={rowStyles.overlayDownload} />}
+                {downloadQueue.includes(item.path) && (
+                    <Text style={rowStyles.overlayProgress}>
+                        {downloadProgress[item.path] ?? 0}%
+                    </Text>
+                )}
             </View>
             <View style={rowStyles.textSections}>
                 <View>

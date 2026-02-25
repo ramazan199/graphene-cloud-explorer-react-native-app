@@ -3,6 +3,7 @@ import { createSlice } from "@reduxjs/toolkit"
 const initialState = {
     uploadQueue: {},
     downloadQueue: [],
+    downloadProgress: {},
     pickedFile: null,
     pickedFiles: [],
     intentFile: [],
@@ -49,6 +50,16 @@ export const newFileTransferReducer = createSlice({
         downloadRemoveQueue: (state, action) => {
             state.downloadQueue = state.downloadQueue.filter(x => x !== action.payload);
         },
+        downloadSetProgress: (state, action) => {
+            const { path, progress } = action.payload || {};
+            if (!path) return;
+            state.downloadProgress[path] = progress;
+        },
+        downloadClearProgress: (state, action) => {
+            const path = action.payload;
+            if (!path) return;
+            delete state.downloadProgress[path];
+        },
         setPickedFiles: (state, action) => {
             state.pickedFiles = action.payload;
         },
@@ -58,5 +69,14 @@ export const newFileTransferReducer = createSlice({
     }
 })
 
-export const { uploadSetQueue, downloadSetQueue, setPickedFiles, setIntentFile, clearUploadQueue, downloadRemoveQueue } = newFileTransferReducer.actions
+export const {
+    uploadSetQueue,
+    downloadSetQueue,
+    setPickedFiles,
+    setIntentFile,
+    clearUploadQueue,
+    downloadRemoveQueue,
+    downloadSetProgress,
+    downloadClearProgress
+} = newFileTransferReducer.actions
 export default newFileTransferReducer.reducer

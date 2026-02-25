@@ -113,6 +113,17 @@ export const rowStyles = StyleSheet.create({
         bottom: 7,
         right: 9,
     },
+    overlayProgress: {
+        position: 'absolute',
+        bottom: 4,
+        left: 6,
+        fontSize: 10,
+        color: '#22215B',
+        backgroundColor: '#ffffffcc',
+        paddingHorizontal: 4,
+        borderRadius: 6,
+        overflow: 'hidden',
+    },
     setting: {
         padding: 5,
     }
@@ -203,6 +214,17 @@ export const ColumnStyles = StyleSheet.create({
     overlayDownload: {
         position: 'absolute',
         left: 5,
-    }
+    },
+    overlayProgress: {
+        position: 'absolute',
+        left: 20,
+        top: 4,
+        fontSize: 10,
+        color: '#22215B',
+        backgroundColor: '#ffffffcc',
+        paddingHorizontal: 4,
+        borderRadius: 6,
+        overflow: 'hidden',
+    },
 })
 

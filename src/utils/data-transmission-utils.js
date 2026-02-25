@@ -40,6 +40,7 @@ import {
   registerUploadProgress,
   updateUploadProgress,
 } from './files-trasnfer';
+import { downloadSetProgress } from '../reducers/filesTransferNewReducer';
 import {
   downloadNotificationRegister,
   cancelNotification,
@@ -573,13 +574,21 @@ export const onCommandResponse = {
     let dataBase64 = jsonObject.Data; // base64
     let chunkPart = jsonObject.ChunkPart;
     let totalChunk = jsonObject.TotalChunk;
+    const isTrackedDownload = store.getState().newFileTransfer.downloadQueue.includes(fullName);
 
     if (chunkPart == 1) {
       download[fullName] = base64ToBuffer(dataBase64);
+      if (isTrackedDownload) {
+        store.dispatch(downloadSetProgress({ path: fullName, progress: 0 }));
+      }
       let selectedFile = store.getState().files.selectedFile;
       let mb = bytesToSize(selectedFile['Length']);
       downloadNotificationRegister({ id: fullName, title: fullName, size: mb, max: totalChunk });
     } else {
+      if (isTrackedDownload) {
+        const progress = Math.floor((chunkPart * 100) / totalChunk);
+        store.dispatch(downloadSetProgress({ path: fullName, progress }));
+      }
       Platform.OS === 'android' &&
         notificationUpdate({ id: fullName, current: chunkPart, title: fullName });
       download[fullName] = joinBuffers(download[fullName], base64ToBuffer(dataBase64));
@@ -587,6 +596,9 @@ export const onCommandResponse = {
     //   downloadProgressBar(filename, download[fullName].byteLength)
 
     if (chunkPart == totalChunk) {
+      if (isTrackedDownload) {
+        store.dispatch(downloadSetProgress({ path: fullName, progress: 100 }));
+      }
       cancelNotification({ id: fullName, title: fullName });
       const buffer = downloadArrayBuffer(filename, download[fullName], isShare);
       download[fullName] = null;

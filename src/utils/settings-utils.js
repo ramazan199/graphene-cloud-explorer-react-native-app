@@ -12,7 +12,7 @@ import RNFetchBlob from "rn-fetch-blob";
 import { Platform } from "react-native";
 import { setEmptySelectedFiles, setFavoritesContent, setFavoritesList, setOrder } from "../reducers/fileReducer";
 import { addToMMKV, deleteRouterMMKV, multiRemoveMMKV, renameMMKVFile, renameMMKVFolder, updateMultiplyMoveMMKV } from "./mmkv";
-import { downloadRemoveQueue, downloadSetQueue } from "../reducers/filesTransferNewReducer";
+import { downloadClearProgress, downloadRemoveQueue, downloadSetProgress, downloadSetQueue } from "../reducers/filesTransferNewReducer";
 import { enqueue, forceEnqueue } from "../reducers/refreshQueueReducer";
 import { setScreenBehavior } from "../reducers/screenControllerReducer";
 import { useErrorAlert } from "../hooks/useErrorAlert";
@@ -38,6 +38,7 @@ export const downloadFile = async () => {
     if (downloadQueue.includes(editedFile.path)) return;
 
     store.dispatch(downloadSetQueue(editedFile.path));
+    store.dispatch(downloadSetProgress({ path: editedFile.path, progress: 0 }));
     try {
         const file = await getFile(editedFile.path, 1)
         const folder = await mkFolder(file);
@@ -45,6 +46,7 @@ export const downloadFile = async () => {
         registerDownloadedPath(editedFile.path, savedPath);
         await addToMMKV(editedFile);
     } finally {
+        store.dispatch(downloadClearProgress(editedFile.path));
         store.dispatch(downloadRemoveQueue(editedFile.path));
     }
 }

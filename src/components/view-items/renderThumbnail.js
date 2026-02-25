@@ -1,4 +1,4 @@
-import { Image } from 'react-native'
+import { Image, View } from 'react-native'
 import FileIcon from '../../assets/icons/viewer/file.svg';
 import FolderIcon from '../../assets/icons/viewer/folder.svg';
 import {
@@ -34,12 +34,38 @@ export const renderThumbnail = (item, border) => {
     if (item.type !== 'image') {
         return thumbnails[item.type];
     }
+
+    const imageFrameStyle = {
+        width: '100%',
+        height: '100%',
+        borderRadius: border,
+        overflow: 'hidden',
+    };
+    const imageStyle = {
+        width: '100%',
+        height: '100%',
+    };
+
     if (item.local) {
-        return <Image source={{ uri: `file://${item.source}` }} style={{ height: '100%', width: '100%', borderRadius: border, flex: 1 }} />
+        return (
+            <View style={imageFrameStyle}>
+                <Image
+                    source={{ uri: `file://${item.source}` }}
+                    resizeMode="cover"
+                    style={imageStyle}
+                />
+            </View>
+        )
     }
-    return <Image source={{ uri: item.source }}
-        style={{ height: '100%', width: '100%', borderRadius: border, flex: 1 }}
-    />
+    return (
+        <View style={imageFrameStyle}>
+            <Image
+                source={{ uri: item.source }}
+                resizeMode="cover"
+                style={imageStyle}
+            />
+        </View>
+    )
 }
 
 
