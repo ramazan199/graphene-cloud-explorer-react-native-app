@@ -1,9 +1,22 @@
 import notifee, { AndroidImportance, AndroidStyle } from '@notifee/react-native';
+import { PermissionsAndroid, Platform } from 'react-native';
 
 
 let lists = {};
 
+export const ensureNotificationPermission = async () => {
+    if (Platform.OS !== 'android' || Platform.Version < 33) return true;
+
+    const permission = PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS;
+    const hasPermission = await PermissionsAndroid.check(permission);
+    if (hasPermission) return true;
+
+    const result = await PermissionsAndroid.request(permission);
+    return result === PermissionsAndroid.RESULTS.GRANTED;
+};
+
 export const displayUploadNotification = async (title, path) => {
+    if (!(await ensureNotificationPermission())) return;
     await notifee.requestPermission()
     const channelId = await notifee.createChannel({
         id: 'com.cloudStorage.upload',
@@ -65,6 +78,7 @@ export const errorMessageNotification = async () => {
 
 export const downloadNotificationRegister = async ({ id, title, size, max }) => {
     lists[id] = { id, size, max };
+    if (!(await ensureNotificationPermission())) return;
     await notifee.requestPermission()
     const channelId = await notifee.createChannel({
         id: 'com.cloudStorage.download',

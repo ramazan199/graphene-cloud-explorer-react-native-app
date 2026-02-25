@@ -5,10 +5,11 @@ import { setSelectedFile } from "../../reducers/fileReducer";
 import { openModal } from "../../reducers/modalReducer";
 import { getCellularInfoMMKV } from "../../utils/mmkv";
 import { downloadFile } from "../../utils/settings-utils";
+import { ensureNotificationPermission } from "../../utils/notification-utils";
 
 const directlyDownloadable = ['image', 'document', 'pdf', 'txt', 'presentation', 'spreadsheet'];
 
-export const downloadManager = (dispatch, name, file, queue, network) => {
+export const downloadManager = async (dispatch, name, file, queue, network) => {
     dispatch(setFromScreen(name));
     dispatch(setSelectedFile(file));
 
@@ -26,6 +27,15 @@ export const downloadManager = (dispatch, name, file, queue, network) => {
     if (network.type === 'cellular') {
         networkCheck(file, dispatch);
         return
+    }
+
+    if (!(await ensureNotificationPermission())) {
+        dispatch(openModal({
+            content: 'Download started, but notifications are disabled for this app. Enable notifications in Android settings to see progress.',
+            head: 'Notifications disabled',
+            type: 'info',
+            icon: 'ex',
+        }))
     }
 
     if (directlyDownloadable.includes(file.type)) {
@@ -72,6 +82,15 @@ export const networkCheck = async (file, dispatch) => {
         }))
 
         return;
+    }
+
+    if (!(await ensureNotificationPermission())) {
+        dispatch(openModal({
+            content: 'Download started, but notifications are disabled for this app. Enable notifications in Android settings to see progress.',
+            head: 'Notifications disabled',
+            type: 'info',
+            icon: 'ex',
+        }))
     }
 
     if (directlyDownloadable.includes(file.type)) {
