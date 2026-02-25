@@ -10,7 +10,7 @@ const SignInScreenNavigator = lazy(() => import('../../navigation/SignInScreenNa
 const TabNavigator = lazy(() => import('../../navigation/TabNavigator'));
 import { checkAvailableDeviceUpdate } from '../../utils/device-updates';
 import { DeviceEventEmitter } from 'react-native';
-import { navigateToFolder, parseFile } from '../../utils/essential-functions';
+import { onQrCodeAcquires, navigateToFolder, parseFile } from '../../utils/essential-functions';
 import { setData } from '../../reducers/testReducer';
 import { setFavoritesContent } from '../../reducers/fileReducer';
 import { setProxy } from '../../reducers/proxyReducer';
@@ -46,6 +46,7 @@ const WelcomeScreen = () => {
             setUserAuth(true);
             dispatch(setUserSecretDataToRedux({ clientId, privetKey, publicKey, publicKeyB64, serverId, encryptionType, auth, guide, qr, deviceKey }));
             dispatch(setProxy(proxy));
+            onQrCodeAcquires(qr).catch(err => console.log("Sync client error:", err));
             getFavoritesNames().then(favs => {
                 const parsed = parseFile(favs);
                 dispatch(setFavoritesContent(parsed));

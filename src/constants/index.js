@@ -1,4 +1,4 @@
-export var chunkSize = 1024 * 128; // The size of the chunks (blocks) for the file transfer. Set 0 to let the server decide the size of the chunks
+export var chunkSize = 1024 * 512; // The size of the chunks (blocks) for the file transfer. Set 0 to let the server decide the size of the chunks
 export var thumbnailSize = 80; // Parameter that is passed to the server and indicates the size of the larger side of the image preview
 export var defaultProxyPort = 5050;
 export var proxy = 'http://proxy.cloudservices.agency:' + defaultProxyPort;

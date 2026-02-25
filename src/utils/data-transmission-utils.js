@@ -670,9 +670,9 @@ export function getDir(path) {
 }
 
 export const setFileStream = async (b64, file, index, path) => {
-  // 262144 -> chunk size (1024 * 256)
-  let totalChunk = Math.ceil(file.size / 262144);
-  let position = (index - 1) * 262144;
+  // chunkSize -> chunk size
+  let totalChunk = Math.ceil(file.size / chunkSize);
+  let position = (index - 1) * chunkSize;
   if (index === 1) {
     registerUploadProgress({
       name: file.name,

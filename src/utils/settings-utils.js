@@ -2,6 +2,7 @@ import { closeModal, openModal } from "../reducers/modalReducer";
 import { setData } from "../reducers/testReducer";
 import { store } from "../store"
 import { addToGroup, copy, createDir, delete_, getFavoritesNames, getFile, move, removeFromGroup, rename } from "./data-transmission-utils"
+import { chunkSize } from "../constants";
 import { fileExistsCheck, mkFolder, writeFileToLocal } from "./local-files";
 import { groupsByFolder, locationGenerator, parseFile, storageInfo } from "./essential-functions";
 import Share from 'react-native-share';
@@ -681,7 +682,7 @@ const readFileStream = async (args) => {
             return RNFetchBlob.fs.readStream(
                 iterator.uri,
                 'base64',
-                1024 * 256
+                chunkSize
             )
                 .then((ifstream) => {
                     store.dispatch(closeModal());
