@@ -7,7 +7,7 @@ import { Layout } from '../../layout';
 import { useSelector } from 'react-redux';
 import { paymentApiClient } from '../../utils/apiClient';
 import { ROUTES } from '../../navigation/types';
-import crashlytics from '@react-native-firebase/crashlytics';
+import { reportCrash } from '../../utils/crashlytics-utils';
 
 const PLANS = {
     STANDARD: {
@@ -26,21 +26,7 @@ const PLANS = {
     }
 };
 
-const reportCrash = (error, attrs = {}) => {
-    const normalizedError = error instanceof Error ? error : new Error(String(error));
-    const normalizedAttrs = Object.keys(attrs).reduce((acc, key) => {
-        const value = attrs[key];
-        if (value !== undefined && value !== null) acc[key] = String(value);
-        return acc;
-    }, {});
 
-    crashlytics().setAttributes({
-        screen: 'PaymentScreen',
-        ...normalizedAttrs,
-    });
-    crashlytics().recordError(normalizedError);
-    console.log('Reported crash:', normalizedError, normalizedAttrs);
-};
 
 export default function PaymentScreen ({ route, navigation }) {
     const { initPaymentSheet, presentPaymentSheet } = useStripe();
@@ -63,6 +49,7 @@ export default function PaymentScreen ({ route, navigation }) {
         
         if (error) {
             reportCrash(new Error(`Payment sheet init failed: ${error.message || 'unknown error'}`), {
+                screen: 'PaymentScreen',
                 flow: 'initializePaymentSheet',
             });
             Alert.alert('Error', 'Unable to initialize payment');
@@ -90,6 +77,7 @@ export default function PaymentScreen ({ route, navigation }) {
             await initializePaymentSheet(clientSecret);
         } catch (error) {
             reportCrash(error, {
+                screen: 'PaymentScreen',
                 flow: 'fetchPaymentIntent',
                 planName,
             });
@@ -109,6 +97,7 @@ export default function PaymentScreen ({ route, navigation }) {
             const { error } = await presentPaymentSheet();
             if (error) {
                 reportCrash(new Error(`Payment failed: ${error.message || 'unknown error'}`), {
+                    screen: 'PaymentScreen',
                     flow: 'openPaymentSheet',
                     planName: selectedPlan,
                 });
@@ -137,6 +126,7 @@ export default function PaymentScreen ({ route, navigation }) {
             }
         } catch (error) {
             reportCrash(error, {
+                screen: 'PaymentScreen',
                 flow: 'openPaymentSheetException',
                 planName: selectedPlan,
             });

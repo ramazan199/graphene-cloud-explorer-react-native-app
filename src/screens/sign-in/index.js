@@ -11,23 +11,9 @@ import { permissionCheck } from '../../utils/permissions';
 import { openModal } from '../../reducers/modalReducer';
 import { setUserSecretDataToRedux } from '../../reducers/userSecretDataReducer';
 import { devices } from '../../constants/boxes';
-import crashlytics from '@react-native-firebase/crashlytics';
+import { reportCrash } from '../../utils/crashlytics-utils';
 
-const reportCrash = (error, attrs = {}) => {
-  const normalizedError = error instanceof Error ? error : new Error(String(error));
-  const normalizedAttrs = Object.keys(attrs).reduce((acc, key) => {
-    const value = attrs[key];
-    if (value !== undefined && value !== null) acc[key] = String(value);
-    return acc;
-  }, {});
 
-  crashlytics().setAttributes({
-    screen: 'SignInScreen',
-    ...normalizedAttrs,
-  });
-  crashlytics().recordError(normalizedError);
-  console.log('Reported crash:', normalizedError, normalizedAttrs);
-};
 
 export const SignInScreen = ({ navigation: { navigate }, route }) => {
 
@@ -51,6 +37,7 @@ export const SignInScreen = ({ navigation: { navigate }, route }) => {
         .then(() => onQrCodeAcquires(devices.andrea['enc']))
         .catch((error) => {
           reportCrash(error, {
+            screen: 'SignInScreen',
             flow: 'signInCredentials',
             connection,
           });

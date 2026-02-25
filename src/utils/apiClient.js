@@ -1,7 +1,7 @@
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import jwtDecode from 'jwt-decode';
-import crashlytics from '@react-native-firebase/crashlytics';
+import { reportCrash } from './crashlytics-utils';
 import { API_SERVICES, SERVICE_CONFIG } from './apiClientConfig';
 
 const HARDCODED_TOKEN = 'eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJiZUN2VDR5SWZObnVvSjBlVjc2S1Vra0pRYkRIa2lzMUt0TkdvMFdqelg0In0.eyJleHAiOjE3Mzc2MTI5MTYsImlhdCI6MTczNjMxNjkxNiwiYXV0aF90aW1lIjoxNzM2MzE2ODkwLCJqdGkiOiI1NWE0NmYwYy1mOGFjLTQ3MjYtYjZlMi1jZDBhOWM2MmY2MmQiLCJpc3MiOiJodHRwczovL2Nsb3Vka2V5Y2xvYWsuZHVja2Rucy5vcmcvcmVhbG1zL2Nsb3VkIiwiYXVkIjoiYWNjb3VudCIsInN1YiI6IjkzMTk1NGFjLWUwNTMtNDFkZC1hYjY4LWZlMTg2OTM3MTRhOSIsInR5cCI6IkJlYXJlciIsImF6cCI6ImNsb3VkLW1vYmlsZS1hcHAiLCJzaWQiOiIzMDc2MjAwNy1lYzAzLTQyMTgtODBlZC1lMjdlMzA3NDBlOGMiLCJhY3IiOiIxIiwicmVhbG1fYWNjZXNzIjp7InJvbGVzIjpbIm9mZmxpbmVfYWNjZXNzIiwiZGVmYXVsdC1yb2xlcy1jbG91ZCIsInVtYV9hdXRob3JpemF0aW9uIl19LCJyZXNvdXJjZV9hY2Nlc3MiOnsiYWNjb3VudCI6eyJyb2xlcyI6WyJtYW5hZ2UtYWNjb3VudCIsIm1hbmFnZS1hY2NvdW50LWxpbmtzIiwidmlldy1wcm9maWxlIl19fSwic2NvcGUiOiJwcm9maWxlIGVtYWlsIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsIm5hbWUiOiJyIHIiLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJ0ZXN0IiwiZ2l2ZW5fbmFtZSI6InIiLCJmYW1pbHlfbmFtZSI6InIiLCJlbWFpbCI6InRlc3RAbWFpbC5jb20ifQ.dDDHh41cw9xUBbUSEv3lyc74DRhJc1Jl9b66wTkYWQkeO47KMMN40wndxGwnp2xlVY-P6gVIBQrX1RgtMAJzlYaCJzXQ0GW61ESlLbmj0QmdnIL1vnATREq6mOWeMcB95wjs4a3w25ImeIhqrgZ4zZ89-QgT3cSr5t6bILzuC8HZp0SE2A4LAb0DQPu9qCvjGf9lzyaCQRZxVbi_sc497xDg2DHPj10rA3vUf4l3LFbHkfyjp7K8mSU0tjJpR4_OFmAKA4D0ffAHjdHc7wpsfqWwzw2ik406Pv1WEsh25WXhZ9Zc8ax71uBugV60zf6UUMUfisTUKhlUg9SSZKSSEA';
@@ -13,12 +13,7 @@ const toCrashAttrs = (attrs = {}) =>
         return acc;
     }, {});
 
-const reportCrash = (error, attrs = {}) => {
-    const normalizedError = error instanceof Error ? error : new Error(String(error));
-    crashlytics().setAttributes(toCrashAttrs({ screen: 'ApiClient', ...attrs }));
-    crashlytics().recordError(normalizedError);
-    console.log('Reported crash:', normalizedError, toCrashAttrs(attrs));
-};
+
 
 const isTokenExpired = (token) => {
     const decoded = jwtDecode(token);
@@ -54,6 +49,7 @@ const refreshAccessToken = async () => {
     } catch (error) {
         console.error('Failed to refresh token:', error);
         reportCrash(error, {
+            screen: 'ApiClient',
             flow: 'refreshAccessToken',
             hasRefreshToken: !!refreshToken,
         });
@@ -109,6 +105,7 @@ const createApiClient = (service) => {
                 } catch (refreshError) {
                     console.error('Failed to refresh token after 401:', refreshError);
                     reportCrash(refreshError, {
+                        screen: 'ApiClient',
                         flow: 'responseInterceptor401',
                         service,
                     });

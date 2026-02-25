@@ -14,24 +14,11 @@ import {
 } from 'react-native-confirmation-code-field';
 import { ActivityIndicator } from "react-native-paper"
 import MarkIcon from '../../../assets/icons/modal/exmark.svg'
-import crashlytics from '@react-native-firebase/crashlytics';
+import { reportCrash } from '../../../utils/crashlytics-utils';
 
 const CELL_COUNT = 6;
 
-const reportCrash = (error, attrs = {}) => {
-    const normalizedError = error instanceof Error ? error : new Error(String(error));
-    const normalizedAttrs = Object.keys(attrs).reduce((acc, key) => {
-        const value = attrs[key];
-        if (value !== undefined && value !== null) acc[key] = String(value);
-        return acc;
-    }, {});
 
-    crashlytics().setAttributes({
-        screen: 'PasswordModal',
-        ...normalizedAttrs,
-    });
-    crashlytics().recordError(normalizedError);
-};
 
 export const PasswordModal = ({ barcode, setScanned, cancel }) => {
 
@@ -75,6 +62,7 @@ export const PasswordModal = ({ barcode, setScanned, cancel }) => {
             // setWait(false);
         } catch (error) {
             reportCrash(error, {
+                screen: 'PasswordModal',
                 flow: 'handleLogIn',
                 pinLength: value?.length,
                 hasBarcode: !!barcode,

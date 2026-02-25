@@ -1,23 +1,8 @@
 import { checkMultiple, requestMultiple, PERMISSIONS, RESULTS } from 'react-native-permissions';
 import { Platform } from 'react-native';
-import crashlytics from '@react-native-firebase/crashlytics';
+import { reportCrash } from './crashlytics-utils';
 
-const reportCrash = (error, attrs = {}) => {
-    const normalizedError = error instanceof Error ? error : new Error(String(error));
-    const normalizedAttrs = Object.keys(attrs).reduce((acc, key) => {
-        const value = attrs[key];
-        if (value !== undefined && value !== null) acc[key] = String(value);
-        return acc;
-    }, {});
 
-    crashlytics().setAttributes({
-        screen: 'Permissions',
-        platform: Platform.OS,
-        ...normalizedAttrs,
-    });
-    crashlytics().recordError(normalizedError);
-    console.log('Reported crash:', normalizedError, normalizedAttrs);
-};
 
 
 export const permissionCheck = async () => {
@@ -38,7 +23,7 @@ const requestPermissionANDROID = async () => {
             PERMISSIONS.ANDROID.WRITE_EXTERNAL_STORAGE,
         ]);
     } catch (err) {
-        reportCrash(err, { flow: 'requestPermissionANDROID' });
+        reportCrash(err, { screen: 'Permissions', platform: Platform.OS, flow: 'requestPermissionANDROID' });
         alert(err);
     }
 };
@@ -64,7 +49,7 @@ const requestPermissionIOS = async () => {
         ]);
 
     } catch (err) {
-        reportCrash(err, { flow: 'requestPermissionIOS' });
+        reportCrash(err, { screen: 'Permissions', platform: Platform.OS, flow: 'requestPermissionIOS' });
         alert(err);
     }
 }

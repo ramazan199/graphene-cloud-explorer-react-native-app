@@ -48,26 +48,12 @@ import {
 import { enqueue, forceEnqueue } from '../reducers/refreshQueueReducer';
 import { useErrorAlert } from '../hooks/useErrorAlert';
 import { parseSingle } from './parser';
-import crashlytics from '@react-native-firebase/crashlytics';
+import { reportCrash } from './crashlytics-utils';
 
 var download = [];
 var upload = [];
 
-const reportCrash = (error, attrs = {}) => {
-  const normalizedError = error instanceof Error ? error : new Error(String(error));
-  const normalizedAttrs = Object.keys(attrs).reduce((acc, key) => {
-    const value = attrs[key];
-    if (value !== undefined && value !== null) acc[key] = String(value);
-    return acc;
-  }, {});
 
-  crashlytics().setAttributes({
-    screen: 'DataTransmission',
-    ...normalizedAttrs,
-  });
-  crashlytics().recordError(normalizedError);
-  console.log('Reported crash:', normalizedError, normalizedAttrs);
-};
 
 const makeUtilMarker = (flow) => `UTIL_FLOW_${flow}_${Date.now()}`;
 
@@ -185,6 +171,7 @@ async function spoolingRequest() {
           // );
           console.log('Error fetching encrypted QR data:', error);
           reportCrash(error, {
+            screen: 'DataTransmission',
             flow: 'getEncryptedQrRequest',
             commandId,
             proxy: store.getState().proxyManager.proxy,
@@ -217,6 +204,7 @@ async function spoolingRequest() {
           const utilMarker = makeUtilMarker('setClientRequest');
           crashlytics().log(utilMarker);
           reportCrash(error, {
+            screen: 'DataTransmission',
             flow: 'setClientRequest',
             commandId,
             proxy: store.getState().proxyManager.proxy,
@@ -257,6 +245,7 @@ async function spoolingRequest() {
           const utilMarker = makeUtilMarker('getRequest');
           crashlytics().log(utilMarker);
           reportCrash(error, {
+            screen: 'DataTransmission',
             flow: 'getRequest',
             commandId,
             proxy: store.getState().proxyManager.proxy,
@@ -295,6 +284,7 @@ async function spoolingRequest() {
               const utilMarker = makeUtilMarker('encryptedPostRequest');
               crashlytics().log(utilMarker);
               reportCrash(error, {
+                screen: 'DataTransmission',
                 flow: 'encryptedPostRequest',
                 commandId,
                 proxy: store.getState().proxyManager.proxy,
@@ -320,6 +310,7 @@ async function spoolingRequest() {
             const utilMarker = makeUtilMarker('encryptDataForTheDevice');
             crashlytics().log(utilMarker);
             reportCrash(error, {
+              screen: 'DataTransmission',
               flow: 'encryptDataForTheDevice',
               commandId,
               proxy: store.getState().proxyManager.proxy,
@@ -332,6 +323,7 @@ async function spoolingRequest() {
       const utilMarker = makeUtilMarker('spoolingRequest');
       crashlytics().log(utilMarker);
       reportCrash(error, {
+        screen: 'DataTransmission',
         flow: 'spoolingRequest',
         proxy: store.getState().proxyManager.proxy,
         utilMarker,
