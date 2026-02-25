@@ -79,7 +79,8 @@ export function getCommandName(commandId) {
 }
 
 const maxConcurrentRequest = 2;
-const REQUEST_TIMEOUT_MS = 12000;
+const REQUEST_TIMEOUT_MS = 30000;
+const SLOW_INTERNET_THRESHOLD_MS = 7000;
 var concurrentRequest = 0;
 let spooler = [];
 
@@ -140,202 +141,199 @@ async function spoolingRequest() {
         url += '&purpose=' + getCommandName(commandId); // SetClient Parameter is used only in debug that indicates whether a public encryption key is sent to the device. In releise the key is never sent it must be scanned by QR code
       }
 
-      if (purpose === getCommandName(command.GetEncryptedQR)) {
-        const controller = new AbortController();
-        const signal = controller.signal;
-        let reqTimeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
-        let lowInternet = setTimeout(() => {
-          store.dispatch(
-            openModal({
-              head: 'Pay attention',
-              content: 'Your internet connection is slow',
-              type: 'info',
-              icon: 'ex',
-            })
-          );
-        }, REQUEST_TIMEOUT_MS);
-        try {
-          const response = await axios.post(url, data, { timeout: REQUEST_TIMEOUT_MS, signal });
-          onCommandResponse.GetEncryptedQR(response.data);
-        } catch (error) {
-          const utilMarker = makeUtilMarker('getEncryptedQrRequest');
-          crashlytics().log(utilMarker);
-          // store.dispatch(
-          //   openModal({
-          //     head: 'Failed to connect',
-          //     content:
-          //       'Failed to fetch encrypted QR data. Please check the Cloud Box connection and try again.',
-          //     type: 'info',
-          //     icon: 'ex',
-          //   })
-          // );
-          console.log('Error fetching encrypted QR data:', error);
-          reportCrash(error, {
-            screen: 'DataTransmission',
-            flow: 'getEncryptedQrRequest',
-            commandId,
-            proxy: store.getState().proxyManager.proxy,
-            utilMarker,
-          });
-          return error;
-        } finally {
-          clearTimeout(reqTimeout);
-          clearTimeout(lowInternet);
-          requestDone();
-        }
-      } else if (commandId == command.SetClient) {
-        const controller = new AbortController();
-        const signal = controller.signal;
-        let reqTimeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
-        let lowInternet = setTimeout(() => {
-          store.dispatch(openModal({
-            head: 'Pay attention',
-            content: 'Your internet connection is slow',
-            type: 'info',
-            icon: 'ex',
-          }))
-        }, REQUEST_TIMEOUT_MS)
-        try {
-          const response = await axios.post(url, data, { timeout: REQUEST_TIMEOUT_MS, signal });
-          clearTimeout(reqTimeout);
-          clearTimeout(lowInternet);
-          return handleResponse(response);
-        } catch (error) {
-          const utilMarker = makeUtilMarker('setClientRequest');
-          crashlytics().log(utilMarker);
-          reportCrash(error, {
-            screen: 'DataTransmission',
-            flow: 'setClientRequest',
-            commandId,
-            proxy: store.getState().proxyManager.proxy,
-            utilMarker,
-          });
-          clearTimeout(reqTimeout);
-          clearTimeout(lowInternet);
-          spooler = [];
-          concurrentRequest = 0;
-          store.dispatch(
-            openModal({
-              head: 'Pay attention',
-              content:
-                'There was a problem connect to Uup-Cloud. Please try again and make sure the Cloud Box or mobile phone is connected to the Internet.',
-              type: 'info',
-              icon: 'ex',
-            })
-          );
-        }
-      } else if (get) {
-        const controller = new AbortController();
-        const signal = controller.signal;
-        let reqTimeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
-        let lowInternet = setTimeout(() => {
-          store.dispatch(openModal({
-            head: 'Pay attention',
-            content: 'Your internet connection is slow',
-            type: 'info',
-            icon: 'ex',
-          }))
-        }, REQUEST_TIMEOUT_MS)
-        try {
-          const response = await axios.get(url, { timeout: REQUEST_TIMEOUT_MS, signal });
-          clearTimeout(reqTimeout);
-          clearTimeout(lowInternet);
-          return handleResponse(response);
-        } catch (error) {
-          const utilMarker = makeUtilMarker('getRequest');
-          crashlytics().log(utilMarker);
-          reportCrash(error, {
-            screen: 'DataTransmission',
-            flow: 'getRequest',
-            commandId,
-            proxy: store.getState().proxyManager.proxy,
-            utilMarker,
-          });
-          return error;
-        }
-      } else {
-        if (data == null) {
-          data = int32ToBuffer(commandId);
-        } else {
-          let cmd = int32ToBuffer(commandId);
-
-          data = joinBuffers(cmd, data);
-        }
-        return encryptDataForTheDevice(data, commandId)
-          .then(async (encrypted) => {
-            const controller = new AbortController();
-            const signal = controller.signal;
-            let reqTimeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
-            let lowInternet = setTimeout(() => {
-              store.dispatch(openModal({
+      try {
+        if (purpose === getCommandName(command.GetEncryptedQR)) {
+          const controller = new AbortController();
+          const signal = controller.signal;
+          let reqTimeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+          let lowInternet = setTimeout(() => {
+            store.dispatch(
+              openModal({
                 head: 'Pay attention',
-                content: 'Your internet connection is slow',
-                type: 'info',
+                content: 'Your internet connection is slow. Would you like to retry?',
+                type: 'confirm',
+                buttonText: 'Retry',
                 icon: 'ex',
-              }))
-            }, REQUEST_TIMEOUT_MS)
-            try {
-              const response = await axios.post(url, encrypted, { timeout: REQUEST_TIMEOUT_MS, signal });
-              let decrypted = handleResponse(response);
-              clearTimeout(reqTimeout);
-              clearTimeout(lowInternet);
-              return decrypted;
-            } catch (error) {
-              const utilMarker = makeUtilMarker('encryptedPostRequest');
-              crashlytics().log(utilMarker);
-              reportCrash(error, {
-                screen: 'DataTransmission',
-                flow: 'encryptedPostRequest',
-                commandId,
-                proxy: store.getState().proxyManager.proxy,
-                utilMarker,
-              });
-              clearTimeout(reqTimeout);
-              clearTimeout(lowInternet);
+                callback: () => {
+                  controller.abort();
+                  store.dispatch(setAuthWait(false));
+                }
+              })
+            );
+          }, SLOW_INTERNET_THRESHOLD_MS);
+          try {
+            const response = await axios.post(url, data, { timeout: REQUEST_TIMEOUT_MS, signal });
+            onCommandResponse.GetEncryptedQR(response.data);
+          } catch (error) {
+            console.log('Error fetching encrypted QR data:', error);
+            reportCrash(error, {
+              screen: 'DataTransmission',
+              flow: 'getEncryptedQrRequest',
+              commandId,
+              proxy: store.getState().proxyManager.proxy,
+            });
+            return error;
+          } finally {
+            clearTimeout(reqTimeout);
+            clearTimeout(lowInternet);
+          }
+        } else if (commandId == command.SetClient) {
+          const controller = new AbortController();
+          const signal = controller.signal;
+          let reqTimeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+          let lowInternet = setTimeout(() => {
+            store.dispatch(openModal({
+              head: 'Pay attention',
+              content: 'Your internet connection is slow. Would you like to retry?',
+              type: 'confirm',
+              buttonText: 'Retry',
+              icon: 'ex',
+              callback: () => {
+                controller.abort();
+                store.dispatch(setAuthWait(false));
+              }
+            }))
+          }, SLOW_INTERNET_THRESHOLD_MS)
+          try {
+            const response = await axios.post(url, data, { timeout: REQUEST_TIMEOUT_MS, signal });
+            clearTimeout(reqTimeout);
+            clearTimeout(lowInternet);
+            return handleResponse(response);
+          } catch (error) {
+            reportCrash(error, {
+              screen: 'DataTransmission',
+              flow: 'setClientRequest',
+              commandId,
+              proxy: store.getState().proxyManager.proxy,
+            });
+            clearTimeout(reqTimeout);
+            clearTimeout(lowInternet);
+            store.dispatch(setAuthWait(false));
+
+            if (error.name !== 'CanceledError' && error.name !== 'AbortError' && error.message !== 'canceled') {
               store.dispatch(
                 openModal({
-                  head: 'Failed to connect',
+                  head: 'Pay attention',
                   content:
-                    'Please try again and make sure the Cloud Box or device is connected to the Internet and Cloud Box working correctly.',
-                  type: 'confirm',
-                  callback: () => {
-                    DeviceEventEmitter.emit('spoolerCleaner');
-                    store.dispatch(enqueue(['CloudScreen', 'MediaScreen', 'FavoriteScreen']));
-                  },
+                    'There was a problem connect to Uup-Cloud. Please try again and make sure the Cloud Box or mobile phone is connected to the Internet.',
+                  type: 'info',
+                  icon: 'ex',
                 })
               );
             }
-          })
-          .catch((error) => {
-            const utilMarker = makeUtilMarker('encryptDataForTheDevice');
-            crashlytics().log(utilMarker);
+          }
+        } else if (get) {
+          const controller = new AbortController();
+          const signal = controller.signal;
+          let reqTimeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+          let lowInternet = setTimeout(() => {
+            store.dispatch(openModal({
+              head: 'Pay attention',
+              content: 'Your internet connection is slow. Would you like to retry?',
+              type: 'confirm',
+              buttonText: 'Retry',
+              icon: 'ex',
+              callback: () => {
+                controller.abort();
+              }
+            }))
+          }, SLOW_INTERNET_THRESHOLD_MS)
+          try {
+            const response = await axios.get(url, { timeout: REQUEST_TIMEOUT_MS, signal });
+            clearTimeout(reqTimeout);
+            clearTimeout(lowInternet);
+            return handleResponse(response);
+          } catch (error) {
             reportCrash(error, {
               screen: 'DataTransmission',
-              flow: 'encryptDataForTheDevice',
+              flow: 'getRequest',
               commandId,
               proxy: store.getState().proxyManager.proxy,
-              utilMarker,
             });
-            useErrorAlert('Encryption error:', error);
-          });
+            return error;
+          } finally {
+            clearTimeout(reqTimeout);
+            clearTimeout(lowInternet);
+          }
+        } else {
+          if (data == null) {
+            data = int32ToBuffer(commandId);
+          } else {
+            let cmd = int32ToBuffer(commandId);
+            data = joinBuffers(cmd, data);
+          }
+          return await encryptDataForTheDevice(data, commandId)
+            .then(async (encrypted) => {
+              const controller = new AbortController();
+              const signal = controller.signal;
+              let reqTimeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+              let lowInternet = setTimeout(() => {
+                store.dispatch(openModal({
+                  head: 'Pay attention',
+                  content: 'Your internet connection is slow. Would you like to retry?',
+                  type: 'confirm',
+                  buttonText: 'Retry',
+                  icon: 'ex',
+                  callback: () => {
+                    controller.abort();
+                  }
+                }))
+              }, SLOW_INTERNET_THRESHOLD_MS)
+              try {
+                const response = await axios.post(url, encrypted, { timeout: REQUEST_TIMEOUT_MS, signal });
+                const result = await handleResponse(response);
+                clearTimeout(reqTimeout);
+                clearTimeout(lowInternet);
+                return result;
+              } catch (error) {
+                reportCrash(error, {
+                  screen: 'DataTransmission',
+                  flow: 'encryptedPostRequest',
+                  commandId,
+                  proxy: store.getState().proxyManager.proxy,
+                });
+                clearTimeout(reqTimeout);
+                clearTimeout(lowInternet);
+                if (error.name !== 'CanceledError' && error.name !== 'AbortError' && error.message !== 'canceled') {
+                  store.dispatch(
+                    openModal({
+                      head: 'Failed to connect',
+                      content:
+                        'Please try again and make sure the Cloud Box or device is connected to the Internet and Cloud Box working correctly.',
+                      type: 'confirm',
+                      callback: () => {
+                        DeviceEventEmitter.emit('spoolerCleaner');
+                        store.dispatch(enqueue(['CloudScreen', 'MediaScreen', 'FavoriteScreen']));
+                      },
+                    })
+                  );
+                }
+              }
+            })
+            .catch((error) => {
+              reportCrash(error, {
+                screen: 'DataTransmission',
+                flow: 'encryptDataForTheDevice',
+                commandId,
+                proxy: store.getState().proxyManager.proxy,
+              });
+            });
+        }
+      } finally {
+        requestDone();
       }
     } catch (error) {
-      const utilMarker = makeUtilMarker('spoolingRequest');
-      crashlytics().log(utilMarker);
       reportCrash(error, {
         screen: 'DataTransmission',
         flow: 'spoolingRequest',
         proxy: store.getState().proxyManager.proxy,
-        utilMarker,
       });
-      concurrentRequest++;
     }
   }
 }
 
 async function handleResponse(response) {
   // console.log('Handling response');  log for
-  requestDone();
   if (
     response.readyState == response.DONE &&
     response.status == 200 &&
