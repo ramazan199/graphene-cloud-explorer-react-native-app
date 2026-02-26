@@ -82,9 +82,16 @@ export function getCommandName(commandId) {
 const maxConcurrentRequest = 2;
 const REQUEST_TIMEOUT_MS = 30000;
 const SLOW_INTERNET_THRESHOLD_MS = 7000;
+const DEBUG_REQUEST_MARKERS = true;
 var concurrentRequest = 0;
 let spooler = [];
 const shouldShowSlowInternetModal = (commandId) => commandId !== command.GetFile;
+
+function logRequestMarker(event, commandId, extra = '') {
+  if (!DEBUG_REQUEST_MARKERS) return;
+  const commandName = getCommandName(commandId) || commandId;
+  console.log(`[REQ:${event}] ${commandName}${extra ? ` | ${extra}` : ''}`);
+}
 
 DeviceEventEmitter.addListener('spoolerCleaner', () => {
   spooler = [];
@@ -100,6 +107,14 @@ export function executeRequest(commandId, data) {
   });
 }
 
+function isAbortLikeError(error) {
+  return (
+    error?.name === 'CanceledError' ||
+    error?.name === 'AbortError' ||
+    error?.message === 'canceled'
+  );
+}
+
 function requestDone() {
   concurrentRequest--;
   if (spooler.length > 0) {
@@ -112,16 +127,19 @@ async function spoolingRequest() {
 
   if (concurrentRequest < maxConcurrentRequest && spooler.length > 0) {
     concurrentRequest++;
+    let commandId = null;
     // -try
     try {
       let [priority, toProcessing] = MinHeap.pop(spooler);
       // spooler.pop();
 
       console.log('Priority: ', priority, ', CommandId:', getCommandName(toProcessing[0]));
-      let commandId = toProcessing[0];
+      commandId = toProcessing[0];
       let data = toProcessing[1];
+      const originalData = toProcessing[1];
       let resolve = toProcessing[2];
       let reject = toProcessing[3];
+      logRequestMarker('start', commandId, `queue=${spooler.length},concurrent=${concurrentRequest}`);
 
       if (commandId == null) {
         console.log('Command does not exist');
@@ -151,6 +169,7 @@ async function spoolingRequest() {
         if (purpose === getCommandName(command.GetEncryptedQR)) {
           const controller = new AbortController();
           const signal = controller.signal;
+          let retryRequested = false;
           let reqTimeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
           let lowInternet = setTimeout(() => {
             store.dispatch(
@@ -161,6 +180,13 @@ async function spoolingRequest() {
                 buttonText: 'Retry',
                 icon: 'ex',
                 callback: () => {
+                  logRequestMarker('retry', commandId, 'slow-internet modal');
+                  retryRequested = true;
+                  controller.abort();
+                  store.dispatch(setAuthWait(false));
+                },
+                cancelCallback: () => {
+                  logRequestMarker('cancel', commandId, 'slow-internet modal');
                   controller.abort();
                   store.dispatch(setAuthWait(false));
                 }
@@ -171,14 +197,20 @@ async function spoolingRequest() {
             const response = await axios.post(url, data, { timeout: REQUEST_TIMEOUT_MS, signal });
             return onCommandResponse.GetEncryptedQR(response.data);
           } catch (error) {
+            if (retryRequested) {
+              logRequestMarker('retry-dispatch', commandId);
+              return executeRequest(commandId, originalData);
+            }
             console.log('Error fetching encrypted QR data:', error);
-            reportCrash(error, {
-              screen: 'DataTransmission',
-              flow: 'getEncryptedQrRequest',
-              commandId,
-              proxy: store.getState().proxyManager.proxy,
-            });
-            return error;
+            if (!isAbortLikeError(error)) {
+              reportCrash(error, {
+                screen: 'DataTransmission',
+                flow: 'getEncryptedQrRequest',
+                commandId,
+                proxy: store.getState().proxyManager.proxy,
+              });
+            }
+            throw error;
           } finally {
             clearTimeout(reqTimeout);
             clearTimeout(lowInternet);
@@ -186,6 +218,7 @@ async function spoolingRequest() {
         } else if (commandId == command.SetClient) {
           const controller = new AbortController();
           const signal = controller.signal;
+          let retryRequested = false;
           let reqTimeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
           let lowInternet = setTimeout(() => {
             store.dispatch(openModal({
@@ -195,6 +228,13 @@ async function spoolingRequest() {
               buttonText: 'Retry',
               icon: 'ex',
               callback: () => {
+                logRequestMarker('retry', commandId, 'slow-internet modal');
+                retryRequested = true;
+                controller.abort();
+                store.dispatch(setAuthWait(false));
+              },
+              cancelCallback: () => {
+                logRequestMarker('cancel', commandId, 'slow-internet modal');
                 controller.abort();
                 store.dispatch(setAuthWait(false));
               }
@@ -206,17 +246,23 @@ async function spoolingRequest() {
             clearTimeout(lowInternet);
             return handleResponse(response);
           } catch (error) {
-            reportCrash(error, {
-              screen: 'DataTransmission',
-              flow: 'setClientRequest',
-              commandId,
-              proxy: store.getState().proxyManager.proxy,
-            });
+            if (retryRequested) {
+              logRequestMarker('retry-dispatch', commandId);
+              return executeRequest(commandId, originalData);
+            }
+            if (!isAbortLikeError(error)) {
+              reportCrash(error, {
+                screen: 'DataTransmission',
+                flow: 'setClientRequest',
+                commandId,
+                proxy: store.getState().proxyManager.proxy,
+              });
+            }
             clearTimeout(reqTimeout);
             clearTimeout(lowInternet);
             store.dispatch(setAuthWait(false));
 
-            if (error.name !== 'CanceledError' && error.name !== 'AbortError' && error.message !== 'canceled') {
+            if (!isAbortLikeError(error)) {
               store.dispatch(
                 openModal({
                   head: 'Pay attention',
@@ -227,10 +273,12 @@ async function spoolingRequest() {
                 })
               );
             }
+            throw error;
           }
         } else if (get) {
           const controller = new AbortController();
           const signal = controller.signal;
+          let retryRequested = false;
           let reqTimeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
           let lowInternet = setTimeout(() => {
             store.dispatch(openModal({
@@ -240,6 +288,12 @@ async function spoolingRequest() {
               buttonText: 'Retry',
               icon: 'ex',
               callback: () => {
+                logRequestMarker('retry', commandId, 'slow-internet modal');
+                retryRequested = true;
+                controller.abort();
+              },
+              cancelCallback: () => {
+                logRequestMarker('cancel', commandId, 'slow-internet modal');
                 controller.abort();
               }
             }))
@@ -250,13 +304,19 @@ async function spoolingRequest() {
             clearTimeout(lowInternet);
             return handleResponse(response);
           } catch (error) {
-            reportCrash(error, {
-              screen: 'DataTransmission',
-              flow: 'getRequest',
-              commandId,
-              proxy: store.getState().proxyManager.proxy,
-            });
-            return error;
+            if (retryRequested) {
+              logRequestMarker('retry-dispatch', commandId);
+              return executeRequest(commandId, originalData);
+            }
+            if (!isAbortLikeError(error)) {
+              reportCrash(error, {
+                screen: 'DataTransmission',
+                flow: 'getRequest',
+                commandId,
+                proxy: store.getState().proxyManager.proxy,
+              });
+            }
+            throw error;
           } finally {
             clearTimeout(reqTimeout);
             clearTimeout(lowInternet);
@@ -272,6 +332,7 @@ async function spoolingRequest() {
             .then(async (encrypted) => {
               const controller = new AbortController();
               const signal = controller.signal;
+              let retryRequested = false;
               let reqTimeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
               let lowInternet = shouldShowSlowInternetModal(commandId)
                 ? setTimeout(() => {
@@ -282,6 +343,12 @@ async function spoolingRequest() {
                     buttonText: 'Retry',
                     icon: 'ex',
                     callback: () => {
+                      logRequestMarker('retry', commandId, 'slow-internet modal');
+                      retryRequested = true;
+                      controller.abort();
+                    },
+                    cancelCallback: () => {
+                      logRequestMarker('cancel', commandId, 'slow-internet modal');
                       controller.abort();
                     }
                   }))
@@ -294,15 +361,21 @@ async function spoolingRequest() {
                 clearTimeout(lowInternet);
                 return result;
               } catch (error) {
-                reportCrash(error, {
-                  screen: 'DataTransmission',
-                  flow: 'encryptedPostRequest',
-                  commandId,
-                  proxy: store.getState().proxyManager.proxy,
-                });
+                if (retryRequested) {
+                  logRequestMarker('retry-dispatch', commandId);
+                  return executeRequest(commandId, originalData);
+                }
+                if (!isAbortLikeError(error)) {
+                  reportCrash(error, {
+                    screen: 'DataTransmission',
+                    flow: 'encryptedPostRequest',
+                    commandId,
+                    proxy: store.getState().proxyManager.proxy,
+                  });
+                }
                 clearTimeout(reqTimeout);
                 clearTimeout(lowInternet);
-                if (error.name !== 'CanceledError' && error.name !== 'AbortError' && error.message !== 'canceled') {
+                if (!isAbortLikeError(error)) {
                   store.dispatch(
                     openModal({
                       head: 'Failed to connect',
@@ -316,15 +389,19 @@ async function spoolingRequest() {
                     })
                   );
                 }
+                throw error;
               }
             })
             .catch((error) => {
-              reportCrash(error, {
-                screen: 'DataTransmission',
-                flow: 'encryptDataForTheDevice',
-                commandId,
-                proxy: store.getState().proxyManager.proxy,
-              });
+              if (!isAbortLikeError(error)) {
+                reportCrash(error, {
+                  screen: 'DataTransmission',
+                  flow: 'encryptDataForTheDevice',
+                  commandId,
+                  proxy: store.getState().proxyManager.proxy,
+                });
+              }
+              throw error;
             });
         }
       })();
@@ -339,6 +416,7 @@ async function spoolingRequest() {
         proxy: store.getState().proxyManager.proxy,
       });
     } finally {
+      logRequestMarker('finally', commandId, `queue=${spooler.length},concurrent=${concurrentRequest - 1}`);
       requestDone();
     }
   }

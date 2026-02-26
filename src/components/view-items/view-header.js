@@ -26,14 +26,20 @@ export const ViewItemHeader = ({ contentSetter, content }) => {
     const { location, mode, filterResults } = useSelector(state => state.files);
 
     const goBack = () => {
-        if (name === 'CloudScreen') return navigateToBack(name).then(content => contentSetter(content))
+        if (name === 'CloudScreen') {
+            return navigateToBack(name)
+                .then(content => content && contentSetter(content))
+                .catch(() => null)
+        }
         else return navigation.canGoBack();
     }
 
     const buckButton = () => {
         if (name == 'CloudScreen') {
             if (location !== "") {
-                navigateToBack(name).then(content => contentSetter(content))
+                navigateToBack(name)
+                    .then(content => content && contentSetter(content))
+                    .catch(() => null)
                 return true
             }
             else return false

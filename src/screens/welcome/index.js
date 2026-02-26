@@ -50,8 +50,10 @@ const WelcomeScreen = () => {
             getFavoritesNames().then(favs => {
                 const parsed = parseFile(favs);
                 dispatch(setFavoritesContent(parsed));
-            })
-            navigateToFolder("", "CloudScreen").then((content) => setContent(content));
+            }).catch(() => null)
+            navigateToFolder("", "CloudScreen")
+                .then((content) => content && setContent(content))
+                .catch(() => null);
             return setTimeout(() => {
                 checkAvailableDeviceUpdate(qr);
             }, 1500);

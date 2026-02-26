@@ -18,7 +18,7 @@ import { hash256 } from './encryption-utils';
 import { setCloudMemory } from '../reducers/profileActionsReducer';
 import { command, fileTypes } from '../constants';
 import { setScreenBehavior } from '../reducers/screenControllerReducer';
-import { goBackLocation, goToLocation, setFavoritesList } from '../reducers/fileReducer';
+import { setFavoritesList, setLocation } from '../reducers/fileReducer';
 import {
     setProxyMMKV,
     setUserPublicAndPrivetKeyMMKV,
@@ -194,39 +194,62 @@ export const parseFile = (fileContent, not, loc) => {
 };
 
 export const navigateToFolder = async (path, routeName) => {
-    store.dispatch(goToLocation(path));
     store.dispatch(setScreenBehavior({ routeName, loader: true, blocker: false }));
-    const data = await getDir(store.getState().files.location);
-    store.dispatch(setScreenBehavior({ routeName, loader: false, blocker: data ? true : false }));
-    return parseFile(data, true, store.getState().files.location);
+    let blocker = true;
+    const targetPath = path || '';
+    try {
+        const data = await getDir(targetPath);
+        store.dispatch(setLocation(targetPath));
+        blocker = data ? true : false;
+        return parseFile(data, true, targetPath);
+    } finally {
+        store.dispatch(setScreenBehavior({ routeName, loader: false, blocker }));
+    }
 };
 
 export const navigateToBack = async (routeName) => {
-    store.dispatch(goBackLocation(store.getState().files.location));
     store.dispatch(setScreenBehavior({ routeName, loader: true, blocker: false }));
-    const data = await getDir(store.getState().files.location);
-    store.dispatch(setScreenBehavior({ routeName, loader: false, blocker: data ? true : false }));
-    return parseFile(data);
+    let blocker = true;
+    const currentLocation = store.getState().files.location || '';
+    const targetPath = currentLocation.split('/').slice(0, -1).join('/');
+    try {
+        const data = await getDir(targetPath);
+        store.dispatch(setLocation(targetPath));
+        blocker = data ? true : false;
+        return parseFile(data);
+    } finally {
+        store.dispatch(setScreenBehavior({ routeName, loader: false, blocker }));
+    }
 };
 
 export const getAllImages = async () => {
     store.dispatch(setScreenBehavior({ routeName: 'MediaScreen', loader: true, blocker: false }));
-    const data = await search('', '[^s]+(.*?).(jpg|jpeg|png|gif|ico|JPG|JPEG|PNG|GIF)$', 0, -1);
-    store.dispatch(
-        setScreenBehavior({ routeName: 'MediaScreen', loader: false, blocker: data ? true : false })
-    );
-    return parseFile(data);
+    let blocker = true;
+    try {
+        const data = await search('', '[^s]+(.*?).(jpg|jpeg|png|gif|ico|JPG|JPEG|PNG|GIF)$', 0, -1);
+        blocker = data ? true : false;
+        return parseFile(data);
+    } finally {
+        store.dispatch(
+            setScreenBehavior({ routeName: 'MediaScreen', loader: false, blocker })
+        );
+    }
 };
 
 export const getFavorites = async () => {
     store.dispatch(setScreenBehavior({ routeName: 'FavoriteScreen', loader: true, blocker: false }));
-    const data = await getGroup('favorities');
-    const names = data?.map((items) => items.Name.replace('loudBoxNuget/Cloud0/', ''));
-    store.dispatch(setFavoritesList(names));
-    store.dispatch(
-        setScreenBehavior({ routeName: 'FavoriteScreen', loader: false, blocker: data ? true : false })
-    );
-    return parseFile(data);
+    let blocker = true;
+    try {
+        const data = await getGroup('favorities');
+        blocker = data ? true : false;
+        const names = data?.map((items) => items.Name.replace('loudBoxNuget/Cloud0/', ''));
+        store.dispatch(setFavoritesList(names));
+        return parseFile(data);
+    } finally {
+        store.dispatch(
+            setScreenBehavior({ routeName: 'FavoriteScreen', loader: false, blocker })
+        );
+    }
 };
 
 export const storageInfo = async () => {

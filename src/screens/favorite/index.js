@@ -25,20 +25,26 @@ const FavoriteScreen = ({ route, navigation }) => {
 
     const reload = () => {
         if (connection) {
-            getFavorites().then(content => dispatch(setFavoritesContent(content)));
+            getFavorites()
+                .then(content => content && dispatch(setFavoritesContent(content)))
+                .catch(() => null);
         }
     }
 
     useEffect(() => {
         if (forceQueue.includes(route.name) && connection) {
-            getFavorites().then(content => favoriteContentDispatcher(content));
+            getFavorites()
+                .then(content => content && favoriteContentDispatcher(content))
+                .catch(() => null);
             dispatch(forceDequeue(route.name));
             return
         }
 
         const unsubscribe = navigation.addListener('focus', () => {
             if (screensQueue.includes(route.name) && connection) {
-                getFavorites().then(content => favoriteContentDispatcher(content));
+                getFavorites()
+                    .then(content => content && favoriteContentDispatcher(content))
+                    .catch(() => null);
                 return dispatch(dequeue(route.name))
             }
         });
