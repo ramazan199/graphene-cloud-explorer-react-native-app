@@ -6,6 +6,7 @@ import { openModal } from "../../reducers/modalReducer";
 import { getCellularInfoMMKV } from "../../utils/mmkv";
 import { downloadFile } from "../../utils/settings-utils";
 import { ensureNotificationPermission } from "../../utils/notification-utils";
+import { reportCrash } from "../../utils/crashlytics-utils";
 
 const directlyDownloadable = ['image', 'document', 'pdf', 'txt', 'presentation', 'spreadsheet'];
 
@@ -51,13 +52,50 @@ export const downloadManager = async (dispatch, name, file, queue, network) => {
     }))
 }
 
-export const openFileNatively = (uri, mime, source) => {
+export const openFileNatively = async (uri, mime, source) => {
+    const normalizedUri = typeof uri === 'string' ? uri.replace('file://', '') : '';
+    const normalizedSource = typeof source === 'string'
+        ? source
+        : (normalizedUri ? `file://${normalizedUri}` : '');
+    const safeMime = mime || 'application/octet-stream';
+
     const open = Platform.select({
-        ios: () => RNFetchBlob.ios.openDocument(source),
-        android: () => RNFetchBlob.android.actionViewIntent(uri, mime)
+        ios: () => RNFetchBlob.ios.openDocument(normalizedSource),
+        android: () => RNFetchBlob.android.actionViewIntent(normalizedUri, safeMime)
     });
 
-    open();
+    try {
+        await open?.();
+    } catch (error) {
+        reportCrash(error, {
+            screen: 'ViewItems',
+            flow: 'openFileNativelyPrimary',
+            platform: Platform.OS,
+            androidVersion: Platform.OS === 'android' ? String(Platform.Version) : 'n/a',
+            uri: normalizedUri,
+            mime: safeMime,
+        });
+
+        if (Platform.OS === 'android' && normalizedUri) {
+            try {
+                await RNFetchBlob.android.actionViewIntent(normalizedUri, '*/*');
+                return true;
+            } catch (fallbackError) {
+                reportCrash(fallbackError, {
+                    screen: 'ViewItems',
+                    flow: 'openFileNativelyFallback',
+                    platform: Platform.OS,
+                    androidVersion: String(Platform.Version),
+                    uri: normalizedUri,
+                    mime: '*/*',
+                });
+            }
+        }
+
+        return false;
+    }
+
+    return true;
 }
 
 export const titleShortener = (title, name) => {
