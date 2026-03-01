@@ -119,6 +119,9 @@ async function entryPointToProxy(ep) {
     if (!ep) {
         ep = 'proxy.cloudservices.agency';
     }
+    if(ep === 'proxy') {
+        ep = 'proxy.tc0.it';
+    }
     if (!ep.startsWith('http://') && !ep.startsWith('https://')) {
         ep = 'http://' + ep;
     }
