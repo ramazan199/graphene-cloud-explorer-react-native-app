@@ -116,11 +116,10 @@ export async function onQrCodeAcquires(qrCode) {
 }
 
 async function entryPointToProxy(ep) {
-    if (!ep) {
-        ep = 'proxy.cloudservices.agency';
-    }
-    if(ep === 'proxy') {
-        ep = 'proxy.tc0.it';
+    if (ep == null || ep == "") {
+        ep = "proxy.tc0.it";
+    } else if (ep.indexOf(".") == -1) {
+        ep = ep + ".tc0.it";
     }
     if (!ep.startsWith('http://') && !ep.startsWith('https://')) {
         ep = 'http://' + ep;
@@ -128,9 +127,9 @@ async function entryPointToProxy(ep) {
 
     let proxy = ep;
     if (proxy.replace('://', '').indexOf(':') == -1) {
-        proxy = proxy + ':' + 5050;
+        proxy = proxy + ':' + defaultProxyPort;
     }
-    // proxy = "http://proxy.tc0.it:5050";
+    
     console.log('Proxy set to: ' + proxy);
 
     store.dispatch(setProxy(proxy));
