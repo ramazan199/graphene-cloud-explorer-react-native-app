@@ -3,6 +3,7 @@ package com.khayym.cloudstorage;
 import android.os.Build;
 import android.os.Bundle;
 import android.content.Intent;
+import android.util.Log;
 import com.facebook.react.ReactActivity;
 import com.facebook.react.ReactActivityDelegate;
 import com.facebook.react.ReactRootView;
@@ -10,6 +11,7 @@ import com.facebook.react.ReactRootView;
 import expo.modules.ReactActivityDelegateWrapper;
 
 public class MainActivity extends ReactActivity {
+  private static final String TAG = "MainActivity";
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     // Set the theme to AppTheme BEFORE onCreate to support 
@@ -45,6 +47,16 @@ public class MainActivity extends ReactActivity {
   public void onNewIntent(Intent intent) {
     super.onNewIntent(intent);
     setIntent(intent);
+  }
+
+  @Override
+  public void onActivityResult(int requestCode, int resultCode, Intent data) {
+    try {
+      super.onActivityResult(requestCode, resultCode, data);
+    } catch (NullPointerException exception) {
+      // Guard against an intermittent null callback path triggered by document picker result dispatch.
+      Log.w(TAG, "Ignored NPE in onActivityResult requestCode=" + requestCode, exception);
+    }
   }
 
   /**
