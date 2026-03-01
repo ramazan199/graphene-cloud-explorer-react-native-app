@@ -24,13 +24,17 @@ const CloudScreen = ({ route, navigation }) => {
 
     useEffect(() => {
         if (forceQueue.includes(route.name) && connection) {
-            navigateToFolder(location, route.name).then((content) => setContent(content))
+            navigateToFolder(location, route.name)
+                .then((content) => content && setContent(content))
+                .catch(() => null)
             dispatch(forceDequeue(route.name));
             return
         }
         const unsubscribe = navigation.addListener('focus', () => {
             if (screensQueue.includes(route.name) && connection) {
-                navigateToFolder(location, route.name).then((content) => setContent(content))
+                navigateToFolder(location, route.name)
+                    .then((content) => content && setContent(content))
+                    .catch(() => null)
                 return dispatch(dequeue(route.name))
             }
         });
@@ -41,7 +45,9 @@ const CloudScreen = ({ route, navigation }) => {
 
     const reloader = () => {
         if (connection) {
-            navigateToFolder(location, route.name).then((content) => setContent(content));
+            navigateToFolder(location, route.name)
+                .then((content) => content && setContent(content))
+                .catch(() => null);
         }
     }
 

@@ -7,10 +7,14 @@ import { styles } from '../info/styles';
 
 const ConfirmModal = () => {
     const dispatch = useDispatch()
-    const { content, head, icon, callback, buttonText } = useSelector(state => state.modalController);
+    const { content, head, icon, callback, cancelCallback, buttonText } = useSelector(state => state.modalController);
     const callbackHandler = () => {
         dispatch(closeModal())
         callback()
+    }
+    const cancelHandler = () => {
+        dispatch(closeModal());
+        cancelCallback && cancelCallback();
     }
     return (
         <View style={styles.container}>
@@ -18,7 +22,7 @@ const ConfirmModal = () => {
             <Text style={styles.head} numberOfLines={2}>{head}</Text>
             <Text style={styles.content}>{content}</Text>
             <View style={styles.buttonGroup}>
-                <Button variant='outlined' text='Cancel' callback={() => dispatch(closeModal())} />
+                <Button variant='outlined' text='Cancel' callback={cancelHandler} />
                 <View style={styles.gap}></View>
                 <Button text={buttonText ? buttonText : 'Ok'} callback={callbackHandler} />
             </View>

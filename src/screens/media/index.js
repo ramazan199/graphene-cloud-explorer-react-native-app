@@ -22,7 +22,9 @@ const MediaScreen = ({ route, navigation }) => {
 
     useEffect(() => {
         if (forceQueue.includes(route.name) && connection) {
-            getAllImages().then(content => setContent(content));
+            getAllImages()
+                .then(content => content && setContent(content))
+                .catch(() => null);
             dispatch(forceDequeue(route.name));
             return
 
@@ -30,7 +32,9 @@ const MediaScreen = ({ route, navigation }) => {
 
         const unsubscribe = navigation.addListener('focus', () => {
             if (screensQueue.includes(route.name) && connection) {
-                getAllImages().then(content => setContent(content));
+                getAllImages()
+                    .then(content => content && setContent(content))
+                    .catch(() => null);
                 return dispatch(dequeue(route.name))
             }
         });
@@ -39,7 +43,10 @@ const MediaScreen = ({ route, navigation }) => {
     }, [navigation, screensQueue, forceQueue])
 
     const reload = () => {
-        connection === true && getAllImages().then(content => setContent(content));
+        connection === true &&
+            getAllImages()
+                .then(content => content && setContent(content))
+                .catch(() => null);
     }
 
 

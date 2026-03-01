@@ -8,6 +8,7 @@ const initialState = {
     head: null,
     icon: null,
     callback: null,
+    cancelCallback: null,
     wait: false,
     buttonText: null,
     pending: false
@@ -25,6 +26,7 @@ export const modalReducer = createSlice({
             state.head = null;
             state.icon = null;
             state.callback = null;
+            state.cancelCallback = null;
             state.wait = false;
             state.buttonText = null;
             state.pending = false;
@@ -37,6 +39,7 @@ export const modalReducer = createSlice({
             state.icon = action.payload.icon;
             state.buttonText = action.payload.buttonText
             state.callback = action.payload.callback;
+            state.cancelCallback = action.payload.cancelCallback;
             state.visible = true;
             state.wait = false;
             state.pending = action.payload.pending

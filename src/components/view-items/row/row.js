@@ -60,7 +60,9 @@ export const Row = ({ item, contentSetter }) => {
         }
 
         if (name !== 'FavoriteScreen') {
-            navigateToFolder(folder.title, 'CloudScreen').then(content => contentSetter(content));
+            navigateToFolder(folder.title, 'CloudScreen')
+                .then(content => content && contentSetter(content))
+                .catch(() => null);
             return
         }
         dispatch(enqueue('CloudScreen'))
