@@ -6,9 +6,9 @@ import { renderThumbnail } from '../renderThumbnail'
 import DotsIcon from '../../../assets/icons/viewer/dotsvertical.svg';
 import StarIcon from '../../../assets/icons/viewer/star.svg';
 import DownloadIcon from '../../../assets/icons/viewer/download.svg';
+import CheckSelectedIcon from '../../../assets/icons/viewer/check-selected.svg';
 import { useContextApi } from '../../../context/ContextApi';
 import { removeSelectedFiles, setFound, setLocation, setSelectedFile, setSelectedFiles } from '../../../reducers/fileReducer';
-import { AntDesign } from '@expo/vector-icons';
 import { rowStyles } from '../styles';
 import { navigateToFolder } from '../../../utils/essential-functions';
 import { fileExistsCheck } from '../../../utils/local-files';
@@ -138,7 +138,7 @@ export const Row = ({ item, contentSetter }) => {
                     15,
                     36
                 )}
-                {selectedFiles.includes(item) && <AntDesign name="checkcircleo" size={20} color="#5D82F5" style={rowStyles.overlay} />}
+                {selectedFiles.includes(item) && <CheckSelectedIcon style={rowStyles.overlay} />}
                 {checkIsFav(item.path)}
                 {downloadQueue.includes(item.path) && <DownloadIcon style={rowStyles.overlayDownload} />}
                 {downloadQueue.includes(item.path) && (

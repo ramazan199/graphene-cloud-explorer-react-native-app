@@ -3,13 +3,13 @@ import { ColumnStyles } from '../styles'
 import DotsIcon from '../../../assets/icons/viewer/dotsvertical.svg';
 import StarIcon from '../../../assets/icons/viewer/star2.svg';
 import DownloadIcon from '../../../assets/icons/viewer/download.svg';
+import CheckSelectedIcon from '../../../assets/icons/viewer/check-selected.svg';
 import { renderThumbnail } from '../renderThumbnail';
 import { useContextApi } from '../../../context/ContextApi';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { removeSelectedFiles, setFound, setLocation, setSelectedFile, setSelectedFiles } from '../../../reducers/fileReducer';
 import { navigateToFolder } from '../../../utils/essential-functions';
-import { AntDesign } from '@expo/vector-icons';
 import { fileExistsCheck } from '../../../utils/local-files';
 import { useCallback, useEffect, useState } from 'react';
 import { enqueue } from '../../../reducers/refreshQueueReducer';
@@ -137,7 +137,7 @@ export const Column = ({ item, contentSetter }) => {
                 </Text>
             )}
             <View style={ColumnStyles.left}>
-                {selectedFiles.includes(item) && <AntDesign name="checkcircleo" size={20} color="#5D82F5" style={ColumnStyles.overlay} />}
+                {selectedFiles.includes(item) && <CheckSelectedIcon style={ColumnStyles.overlay} />}
 
                 <View style={ColumnStyles.thumbnail}>
                     {renderThumbnail(
