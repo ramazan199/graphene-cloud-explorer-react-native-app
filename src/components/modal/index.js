@@ -26,10 +26,11 @@ const modalTypes = {
 
 export const ModalBox = () => {
     const { t } = useTranslation();
-    const { visible, type, overlayColor, showBackButton, cancelCallback } = useSelector(state => state.modalController);
+    const { visible, type, overlayColor, showBackButton, cancelCallback, compact } = useSelector(state => state.modalController);
     const dispatch = useDispatch();
     
     const modalTypeFinder = (type) => {
+        if (compact && type === 'info') return styles.compactBox
         if (type === 'input') return styles.forInput
         else if (type === 'progress') return styles.forProgress
         else if (type === 'prepare') return styles.prepare

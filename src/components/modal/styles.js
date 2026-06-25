@@ -17,6 +17,13 @@ export const styles = StyleSheet.create({
         backgroundColor: '#fff',
         borderRadius: 15,
     },
+    compactBox: {
+        marginHorizontal: 25,
+        paddingHorizontal: 16,
+        paddingVertical: 20,
+        backgroundColor: '#fff',
+        borderRadius: 15,
+    },
     prepare: {
         minHeight: 100,
         backgroundColor: '#fff',

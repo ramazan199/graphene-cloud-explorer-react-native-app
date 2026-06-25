@@ -6,10 +6,11 @@ import UnitIcon from '../../assets/icons/bottomSheet/unit.svg'
 import FilterIcon from '../../assets/icons/home/ticket.svg';
 import { Ionicons } from "@expo/vector-icons";
 import { useDispatch, useSelector } from 'react-redux';
-import { navigateToBack, parseFile } from '../../utils/essential-functions';
+import { formatBytes, navigateToBack, parseFile } from '../../utils/essential-functions';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { useCallback, useState, useEffect, memo } from 'react';
+import { useCallback, useState, useEffect, useMemo, memo } from 'react';
 import { setFilterResults, setFilterStatus, setMode } from '../../reducers/fileReducer';
+import { openModal } from '../../reducers/modalReducer';
 import { PopUpModal } from '../pop-up/modal';
 import { SortModal } from '../pop-up/sort-modal';
 import { search } from '../../utils/data-transmission-utils';
@@ -27,6 +28,16 @@ export const ViewItemHeader = memo(({ contentSetter, content }) => {
     const [sortOpen, setSortOpen] = useState(false);
     const [tagsArray, setTagsArray] = useState([]);
     const { location, mode, filterResults } = useSelector(state => state.files);
+    const folderStats = useMemo(() => {
+        const items = Array.isArray(content) ? content : [];
+        const files = items.filter(item => item?.type !== 'folder');
+        const totalSize = files.reduce((sum, item) => sum + (Number(item?.Length) || 0), 0);
+
+        return {
+            files: files.length,
+            size: formatBytes(totalSize),
+        };
+    }, [content]);
 
     const goBack = () => {
         if (name === 'CloudScreen') {
@@ -113,6 +124,19 @@ export const ViewItemHeader = memo(({ contentSetter, content }) => {
         } else return null;
     }
 
+    const showFolderInfo = () => {
+        dispatch(openModal({
+            head: t('options.folder_info', { defaultValue: 'Current folder info' }),
+            content: t('options.folder_files_size', {
+                count: folderStats.files,
+                size: folderStats.size,
+                defaultValue: `Files: ${folderStats.files} (size: ${folderStats.size})`
+            }),
+            type: 'info',
+            compact: true,
+        }));
+    }
+
 
     return (
         <View style={styles.selector}>
@@ -134,6 +158,9 @@ export const ViewItemHeader = memo(({ contentSetter, content }) => {
                         visibility={sortOpen}
                         setVisibility={setSortOpen}
                     />
+                    {name === 'CloudScreen' && !!location && <Pressable hitSlop={10} onPress={showFolderInfo} style={{ width: 32, height: 32, alignItems: 'center', justifyContent: 'center', marginRight: 9 }}>
+                        <Ionicons name="information-circle-outline" size={24} color="#B0C0D0" />
+                    </Pressable>}
                     <Pressable hitSlop={10} onPress={() => setSortOpen(!sortOpen)} style={{ width: 32, height: 32, alignItems: 'center', justifyContent: 'center', marginRight: 9 }}>
                         <Ionicons name="swap-vertical" size={24} color={sortOpen ? '#22215B' : '#B0C0D0'} />
                     </Pressable>

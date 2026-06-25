@@ -180,6 +180,8 @@
     "logout": "Log out",
     "folder": "Folder",
     "file": "File",
+    "folder_info": "Current folder info",
+    "folder_files_size": "Files: {{count}} (size: {{size}})",
     "choose": "Choose",
     "save_upload_where": "Where do you want to save upload the file?"
   },

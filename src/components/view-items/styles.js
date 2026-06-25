@@ -11,6 +11,7 @@ export const styles = StyleSheet.create({
     selectorIconGroup: {
         flexDirection: 'row',
         alignItems: 'center',
+        flexShrink: 0,
     },
     touchableOpacityOne: {
         paddingHorizontal: 10,
@@ -33,11 +34,15 @@ export const styles = StyleSheet.create({
     titleText: {
         fontSize: 16,
         color: "#22215B",
-        width: '70%'
+        flex: 1,
+        minWidth: 0,
     },
     pageTitle: {
         flexDirection: 'row',
         alignItems: 'center',
+        flex: 1,
+        minWidth: 0,
+        marginRight: 8,
     },
 
 })

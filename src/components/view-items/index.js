@@ -31,7 +31,7 @@ const ViewItems = ({ content, setContent, name, reload }) => {
 
   return (
     <View style={styles.container}>
-      <ViewItemHeader contentSetter={contentSetter} content={content?.length} />
+      <ViewItemHeader contentSetter={contentSetter} content={sortedContent} />
       {name === 'CloudScreen' && <UploadProgress />}
       {(filterStatus && name === 'HomeScreen') ? <ResultsView /> : <FlashList
         data={sortedContent}
